@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.eggs/
+dist/
+build/
+*.egg-info/
+venv/
+.venv/
+env/
+
+# Banco de dados local — NÃO versionar
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets do Streamlit — NÃO versionar (configurar no painel do Streamlit Cloud)
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

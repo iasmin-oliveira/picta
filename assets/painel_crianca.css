@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+
+html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
+
+:root {
+    --bg-page:    #F5F0FF;
+    --lavender:   #E8E0FF;
+    --mint:       #D4F0E4;
+    --peach:      #FFE8D8;
+    --sky:        #D6E8FF;
+    --purple:     #6B4FA0;
+    --text-main:  #2D2145;
+    --text-muted: #8B7EA8;
+    --white:      #FFFFFF;
+    --shadow:     rgba(107,79,160,0.10);
+    --border-light: #DDD6FE;
+}
+
+[data-testid="stAppViewContainer"] { background: var(--bg-page); }
+[data-testid="stHeader"], [data-testid="stToolbar"] { display: none; }
+#MainMenu, footer { visibility: hidden; }
+
+/* ── Cabeçalho ── */
+.header-crianca {
+    background: var(--lavender);
+    border-radius: 28px;
+    padding: 1.2rem 1.6rem;
+    margin-bottom: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px var(--shadow);
+}
+.header-textos { display: flex; flex-direction: column; gap: 0.3rem; }
+.header-crianca .saudacao  { font-size: 1.5rem; font-weight: 900; color: var(--purple); }
+.header-crianca .subtitulo { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; }
+
+/* Botão sair — escopo restrito ao logout-container */
+#logout-container button {
+    width: auto !important;
+    min-width: 90px !important;
+    min-height: unset !important;
+    max-width: 110px !important;
+    padding: 0.55rem 1rem !important;
+    border-radius: 14px !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    background: var(--white) !important;
+    color: var(--text-muted) !important;
+    border: 1.5px solid var(--border-light) !important;
+    box-shadow: none !important;
+}
+#logout-container button:hover {
+    background: var(--peach) !important;
+    color: #8B3A00 !important;
+}
+
+/* ── Rótulos de categoria ── */
+.categoria-titulo {
+    font-size: 0.9rem; font-weight: 900;
+    margin: 1.2rem 0 0.8rem 0; padding: 0.4rem 1.1rem;
+    border-radius: 50px; display: inline-block; letter-spacing: 0.05em;
+}
+.cat-emocao      { background: var(--peach); color: #8B3A00; }
+.cat-acao        { background: var(--sky);   color: #1A3F7A; }
+.cat-necessidade { background: var(--mint);  color: #155F40; }
+
+/* ── BOTÕES DE PICTOGRAMA ──
+   Técnica: âncora .anchor-{cat} injetada imediatamente antes de cada button.
+   O seletor :has() localiza o div pai do span e apanha o button no próximo
+   irmão div, sem sobrescrever outros botões da página.
+── */
+
+/* Base: todos os botões de pictograma têm estrutura comum */
+[data-testid="stColumn"] div:has(span.anchor-emocao) + div button,
+[data-testid="stColumn"] div:has(span.anchor-acao) + div button,
+[data-testid="stColumn"] div:has(span.anchor-necessidade) + div button {
+    border-radius: 22px !important;
+    min-height: 110px !important;
+    width: 100% !important;
+    padding: 0.9rem 0.5rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    font-family: 'Nunito', sans-serif !important;
+    border: none !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease !important;
+    box-shadow: 0 3px 12px var(--shadow) !important;
+    cursor: pointer !important;
+    line-height: 1.35 !important;
+    white-space: pre-wrap !important;
+}
+
+/* Emoções → pêssego */
+[data-testid="stColumn"] div:has(span.anchor-emocao) + div button {
+    background: var(--peach) !important;
+    color: #8B3A00 !important;
+}
+[data-testid="stColumn"] div:has(span.anchor-emocao) + div button:hover {
+    transform: translateY(-3px) scale(1.03) !important;
+    box-shadow: 0 8px 22px rgba(139,58,0,0.15) !important;
+    filter: brightness(0.97) !important;
+}
+
+/* Ações → azul céu */
+[data-testid="stColumn"] div:has(span.anchor-acao) + div button {
+    background: var(--sky) !important;
+    color: #1A3F7A !important;
+}
+[data-testid="stColumn"] div:has(span.anchor-acao) + div button:hover {
+    transform: translateY(-3px) scale(1.03) !important;
+    box-shadow: 0 8px 22px rgba(26,63,122,0.15) !important;
+    filter: brightness(0.97) !important;
+}
+
+/* Necessidades → menta */
+[data-testid="stColumn"] div:has(span.anchor-necessidade) + div button {
+    background: var(--mint) !important;
+    color: #155F40 !important;
+}
+[data-testid="stColumn"] div:has(span.anchor-necessidade) + div button:hover {
+    transform: translateY(-3px) scale(1.03) !important;
+    box-shadow: 0 8px 22px rgba(21,95,64,0.15) !important;
+    filter: brightness(0.97) !important;
+}
+
+/* Active state geral */
+[data-testid="stColumn"] div:has(span[class^="anchor-"]) + div button:active {
+    transform: translateY(0) scale(0.97) !important;
+}
+
+/* ── Feedback de sucesso ── */
+[data-testid="stSuccess"] {
+    background: var(--mint) !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-weight: 800 !important;
+    color: #155F40 !important;
+}

@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
+
+:root {
+    --bg-page:     #F5F0FF;
+    --lavender:    #E8E0FF;
+    --mint:        #D4F0E4;
+    --peach:       #FFE8D8;
+    --sky:         #D6E8FF;
+    --purple-dark: #6B4FA0;
+    --purple-mid:  #8B6FC0;
+    --text-main:   #2D2145;
+    --text-muted:  #8B7EA8;
+    --white:       #FFFFFF;
+    --shadow:      rgba(107, 79, 160, 0.10);
+    --border-light:#DDD6FE;
+}
+
+[data-testid="stAppViewContainer"] { background: var(--bg-page); min-height: 100vh; }
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stToolbar"] { display: none; }
+#MainMenu, footer { visibility: hidden; }
+
+/* ── Logo ── */
+.picta-logo { text-align: center; padding: 0.5rem 0 1.2rem 0; }
+.picta-logo .star { font-size: 3.8rem; line-height: 1; }
+.picta-logo h1 {
+    color: var(--purple-dark);
+    font-size: 3.2rem; font-weight: 900;
+    margin: 0.2rem 0 0; letter-spacing: -1px;
+}
+.picta-logo p { color: var(--text-muted); font-size: 0.92rem; margin: 0.3rem 0 0; font-weight: 600; }
+
+/* ── Labels dos inputs ── */
+[data-testid="stTextInput"] label {
+    color: var(--purple-dark) !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+}
+
+/* ── Inputs ── */
+[data-testid="stTextInput"] input {
+    border-radius: 14px !important;
+    border: 2.5px solid var(--lavender) !important;
+    padding: 0.8rem 1rem !important;
+    font-size: 1rem !important;
+    font-family: 'Nunito', sans-serif !important;
+    background: #FAF8FF !important;
+    color: var(--text-main) !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+[data-testid="stTextInput"] input:focus {
+    border-color: var(--purple-dark) !important;
+    box-shadow: 0 0 0 3px rgba(107,79,160,0.15) !important;
+    background: white !important;
+}
+[data-testid="stTextInput"] input::placeholder {
+    color: var(--text-muted) !important; opacity: 0.7 !important;
+}
+
+/* ── Botão de login — ESCOPO: só dentro do formulário de login ── */
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
+    background: linear-gradient(135deg, #8B6FC0 0%, #6B4FA0 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 0.9rem 1.5rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    font-family: 'Nunito', sans-serif !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    min-height: unset !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+    box-shadow: 0 4px 18px rgba(107,79,160,0.30) !important;
+}
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(107,79,160,0.40) !important;
+}
+
+/* ── Badges ── */
+.badge-row { display: flex; gap: 0.6rem; justify-content: center; margin: 0.8rem 0 0.5rem; }
+.badge { padding: 0.38rem 1rem; border-radius: 50px; font-size: 0.78rem; font-weight: 800; }
+.badge-crianca  { background: var(--peach); color: #8B3A00; }
+.badge-cuidador { background: var(--mint);  color: #155F40; }
+
+/* ── Expander ── */
+[data-testid="stExpander"] {
+    border: 2px dashed var(--border-light) !important;
+    border-radius: 12px !important;
+    background: #FAF8FF !important;
+}
+[data-testid="stExpander"] div { color: var(--text-main) !important; font-size: 0.88rem !important; }

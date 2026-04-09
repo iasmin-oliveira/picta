@@ -1,0 +1,15 @@
+[theme]
+primaryColor = "#6B4FA0"
+backgroundColor = "#F5F0FF"
+secondaryBackgroundColor = "#E8E0FF"
+textColor = "#2D2145"
+font = "sans serif"
+
+# Força o tema light
+base = "light"
+
+[client]
+showErrorDetails = false
+
+[logger]
+level = "info"
