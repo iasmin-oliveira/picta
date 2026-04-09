@@ -1,3 +1,4 @@
+from typing import Optional, List
 """
 PICTA — modules/auth.py
 Autenticação, sessões persistentes (cookie) e consultas de perfil.
@@ -18,7 +19,7 @@ from database.db import executar, hash_senha
 SESSION_DAYS = 7
 
 
-def autenticar_usuario(username: str, senha: str) -> dict | None:
+def autenticar_usuario(username: str, senha: str) -> Optional[dict]:
     """Valida credenciais. Retorna dict do utilizador ou None."""
     return executar(
         "SELECT id, nome, perfil, username FROM Utilizadores WHERE username=? AND senha_hash=?",
@@ -45,7 +46,7 @@ def criar_sessao(usuario_id: int) -> str:
     return token
 
 
-def validar_sessao(token: str) -> dict | None:
+def validar_sessao(token: str) -> Optional[dict]:
     """
     Valida token de sessão. Retorna dict do utilizador se válido, None se expirado/inválido.
     """
@@ -69,7 +70,7 @@ def revogar_sessao(token: str):
         executar("DELETE FROM Sessoes WHERE token=?", (token,), commit=True)
 
 
-def obter_crianca_por_usuario_id(utilizador_id: int) -> dict | None:
+def obter_crianca_por_usuario_id(utilizador_id: int) -> Optional[dict]:
     """Retorna os dados da Criança vinculados ao utilizador logado."""
     return executar(
         """SELECT c.id, c.nome, c.cuidador_id
@@ -81,7 +82,7 @@ def obter_crianca_por_usuario_id(utilizador_id: int) -> dict | None:
     )
 
 
-def obter_criancas_do_cuidador(cuidador_id: int) -> list[dict]:
+def obter_criancas_do_cuidador(cuidador_id: int) -> List[dict]:
     """Retorna todas as crianças vinculadas a um cuidador."""
     return executar(
         "SELECT id, nome, data_nascimento FROM Criancas WHERE cuidador_id=? ORDER BY nome",

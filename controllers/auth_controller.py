@@ -1,3 +1,4 @@
+from typing import Optional, List
 """
 PICTA — controllers/auth_controller.py
 Fluxo de autenticação com sessão persistente via cookie.
@@ -15,7 +16,7 @@ from views.login import render_login_form
 COOKIE_NAME = "picta_session"
 
 
-def _ler_cookie() -> str | None:
+def _ler_cookie() -> Optional[str]:
     """Lê o token de sessão do cookie via st.query_params ou components."""
     # Streamlit não tem API nativa de cookies; usamos query_params como fallback
     # e o componente streamlit-cookies-controller para persistência real.
