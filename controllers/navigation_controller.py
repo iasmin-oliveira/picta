@@ -1,12 +1,13 @@
 """
 PICTA — controllers/navigation_controller.py
-Roteador principal baseado em perfil autenticado.
+Roteador principal baseado no perfil autenticado.
 """
 
 import streamlit as st
-from views.painel_crianca import render as render_crianca
-from views.dashboard_cuidador import render as render_dashboard
 from controllers.auth_controller import is_authenticated, login, logout
+
+PERFIS_CUIDADOR      = ('responsavel', 'cuidador')
+PERFIS_PROFISSIONAL  = ('profissional',)
 
 
 def route_app() -> None:
@@ -17,10 +18,18 @@ def route_app() -> None:
     perfil = st.session_state.get('usuario', {}).get('perfil', '')
 
     if perfil == 'crianca':
+        from views.painel_crianca import render as render_crianca
+
         render_crianca()
-    elif perfil == 'cuidador':
-        render_dashboard()
+    elif perfil in PERFIS_CUIDADOR:
+        from views.dashboard_cuidador import render as render_dashboard_cuidador
+
+        render_dashboard_cuidador()
+    elif perfil in PERFIS_PROFISSIONAL:
+        from views.dashboard_profissional import render as render_dashboard_profissional
+
+        render_dashboard_profissional()
     else:
-        st.error("Perfil não reconhecido.")
+        st.error("Perfil não reconhecido: " + perfil)
         if st.button("↩️ Voltar ao login"):
             logout()

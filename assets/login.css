@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-
-html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
+html, body, [class*="css"] {
+    font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
 
 :root {
     --bg-page:     #F5F0FF;
@@ -28,7 +28,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
 .picta-logo h1 {
     color: var(--purple-dark);
     font-size: 3.2rem; font-weight: 900;
-    margin: 0.2rem 0 0; letter-spacing: -1px;
+    margin: 0.2rem 0 0; letter-spacing: 0;
 }
 .picta-logo p { color: var(--text-muted); font-size: 0.92rem; margin: 0.3rem 0 0; font-weight: 600; }
 
@@ -45,7 +45,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
     border: 2.5px solid var(--lavender) !important;
     padding: 0.8rem 1rem !important;
     font-size: 1rem !important;
-    font-family: 'Nunito', sans-serif !important;
+    font-family: "Segoe UI", system-ui, sans-serif !important;
     background: #FAF8FF !important;
     color: var(--text-main) !important;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -68,7 +68,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
     padding: 0.9rem 1.5rem !important;
     font-size: 1.05rem !important;
     font-weight: 800 !important;
-    font-family: 'Nunito', sans-serif !important;
+    font-family: "Segoe UI", system-ui, sans-serif !important;
     cursor: pointer !important;
     width: 100% !important;
     min-height: unset !important;
@@ -93,3 +93,17 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
     background: #FAF8FF !important;
 }
 [data-testid="stExpander"] div { color: var(--text-main) !important; font-size: 0.88rem !important; }
+
+/* ── Feedback de loading no botão de login (Ciclo 2 fix) ── */
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:active {
+    transform: scale(0.97) !important;
+    opacity: 0.85 !important;
+}
+
+/* Esconde o spinner padrão do Streamlit — substituído pelo overlay PICTA */
+[data-testid="stSpinner"] { display: none !important; }
+
+/* Garante que o form de login não "vaze" durante transição */
+[data-testid="stForm"] {
+    transition: opacity 0.15s ease;
+}

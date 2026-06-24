@@ -1,0 +1,1787 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   PICTA — picta_design.css  |  Sistema de Design Unificado
+   Inspirado no protótipo HTML — sidebar lateral, cards e fonte do sistema
+═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Variáveis ─────────────────────────────────────────────────────── */
+:root {
+  --indigo-950: #1e1b4b;
+  --indigo-900: #312e81;
+  --indigo-700: #4338ca;
+  --indigo-600: #4f46e5;
+  --indigo-500: #6366f1;
+  --indigo-400: #818cf8;
+  --indigo-100: #e0e7ff;
+  --indigo-50 : #eef2ff;
+
+  --purple-700: #7c3aed;
+  --purple-500: #8b5cf6;
+  --purple-400: #a78bfa;
+
+  --gray-950:  #0f0f1a;
+  --gray-600:  #4b5563;
+  --gray-400:  #9ca3af;
+  --gray-200:  #e5e7eb;
+  --gray-100:  #f3f4f6;
+  --gray-50 :  #f9fafb;
+
+  --green-500: #22c55e;
+  --orange-400:#fb923c;
+  --red-400:   #f87171;
+  --blue-400:  #60a5fa;
+
+  --bg-app  : #f0f1f8;
+  --bg-sidebar: #f0f1f8;
+  --white   : #ffffff;
+  --border  : #e0e7ff;
+  --shadow-s: 0 2px 8px rgba(79,70,229,.07);
+  --shadow-m: 0 4px 20px rgba(79,70,229,.12);
+  --shadow-l: 0 8px 32px rgba(79,70,229,.18);
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+}
+
+/* ── Fonte global ──────────────────────────────────────────────────── */
+html, body, [class*="css"], * {
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* ── Fundo da app ──────────────────────────────────────────────────── */
+[data-testid="stAppViewContainer"] {
+  background: var(--bg-app) !important;
+}
+[data-testid="stMain"] > div {
+  background: transparent !important;
+}
+
+/* ── Esconder elementos Streamlit desnecessários ───────────────────── */
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+#MainMenu, footer { display: none !important; }
+
+[data-testid="stMainBlockContainer"] {
+  padding: 2rem 2.5rem !important;
+  max-width: 100% !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════════════════ */
+[data-testid="stSidebar"] {
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--gray-200) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-width: 270px !important;
+  max-width: 270px !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+  padding: 1.5rem 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  height: 100vh !important;
+}
+
+/* Logo no topo da sidebar */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .5rem .5rem 1.5rem;
+  margin-bottom: .25rem;
+}
+.sidebar-logo-icon {
+  width: 46px; height: 46px;
+  background: var(--indigo-600);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-m);
+  flex-shrink: 0;
+}
+.sidebar-logo-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  letter-spacing: 0;
+}
+
+/* Nav items */
+.nav-section { margin-bottom: .25rem; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .85rem 1rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--gray-400);
+  transition: all .2s ease;
+  margin-bottom: .15rem;
+  user-select: none;
+}
+.nav-item:hover {
+  background: var(--white);
+  color: var(--indigo-600);
+  box-shadow: var(--shadow-s);
+}
+.nav-item.active {
+  background: var(--white);
+  color: var(--indigo-600);
+  box-shadow: 0 4px 15px rgba(79,70,229,.12);
+  font-weight: 800;
+}
+.nav-item .nav-icon {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  opacity: .5;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-item .nav-label { flex: 1; }
+
+/* Perfil na base da sidebar */
+.sidebar-profile {
+  margin-top: auto;
+  background: var(--white);
+  border-radius: var(--r-md);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-s);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: .9rem;
+}
+.sidebar-profile-top {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.sidebar-avatar-lg {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--indigo-100);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.sidebar-profile-name {
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-profile-role {
+  font-size: .72rem;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+
+/* Seletor de paciente na sidebar */
+.sidebar-select-label {
+  font-size: .7rem;
+  font-weight: 800;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: .3rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONTEÚDO PRINCIPAL
+═══════════════════════════════════════════════════════════════════ */
+
+/* Topo da página */
+.page-header {
+  margin-bottom: 2rem;
+}
+.page-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+.page-subtitle {
+  font-size: .95rem;
+  color: var(--gray-400);
+  font-weight: 600;
+  margin-top: .3rem;
+}
+.page-subtitle b, .page-subtitle strong {
+  color: var(--indigo-600);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASS CARDS
+═══════════════════════════════════════════════════════════════════ */
+.glass-card {
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: var(--shadow-s);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ─ KPI Cards ─────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi-card {
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(12px);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: var(--shadow-s);
+  padding: 1.4rem 1.2rem 1.1rem;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 4px solid;
+}
+.kpi-accent-indigo  { border-bottom-color: var(--indigo-400); }
+.kpi-accent-orange  { border-bottom-color: var(--orange-400); }
+.kpi-accent-blue    { border-bottom-color: var(--blue-400);   }
+.kpi-accent-green   { border-bottom-color: var(--green-500);  }
+.kpi-accent-red     { border-bottom-color: var(--red-400);    }
+
+.kpi-label {
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--gray-400);
+  margin-bottom: .5rem;
+}
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1;
+  margin-bottom: .4rem;
+}
+.kpi-sub {
+  font-size: .72rem;
+  font-weight: 700;
+}
+.kpi-sub-green  { color: var(--green-500); }
+.kpi-sub-orange { color: var(--orange-400); }
+.kpi-sub-blue   { color: var(--blue-400); }
+
+/* ─ Barra de progresso inline ──────────────────────────────────── */
+.bar-wrap {
+  background: var(--gray-100);
+  border-radius: 50px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: .3rem;
+}
+.bar-fill { height: 100%; border-radius: 50px; }
+
+/* ─ Timeline / Diário ──────────────────────────────────────────── */
+.diary-item {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  padding: .9rem 1rem;
+  background: rgba(255,255,255,.65);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  margin-bottom: .6rem;
+}
+.diary-emoji { font-size: 1.7rem; }
+.diary-name  { font-size: .88rem; font-weight: 800; color: var(--indigo-950); }
+.diary-time  { font-size: .72rem; font-weight: 600; color: var(--gray-400); margin-top: .1rem; }
+.diary-badge {
+  margin-left: auto;
+  font-size: .65rem;
+  font-weight: 800;
+  padding: .2rem .65rem;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.badge-emocao      { background: #fff0e8; color: #9a3412; }
+.badge-acao        { background: var(--indigo-50); color: var(--indigo-700); }
+.badge-necessidade { background: #f0fdf4; color: #14532d; }
+
+/* ─ Grupo de data (timeline) ───────────────────────────────────── */
+.date-group {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 1rem 0 .5rem;
+}
+.date-badge {
+  background: var(--indigo-100);
+  color: var(--indigo-700);
+  font-size: .72rem;
+  font-weight: 800;
+  padding: .2rem .75rem;
+  border-radius: 50px;
+  white-space: nowrap;
+}
+.date-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+/* ─ Seção header interno ───────────────────────────────────────── */
+.sec-header {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* ─ Alerta card ─────────────────────────────────────────────────── */
+.alert-card {
+  background: #fff8f6;
+  border: 1.5px solid #ffd4c4;
+  border-left: 4px solid #fb923c;
+  border-radius: var(--r-sm);
+  padding: .8rem 1rem;
+  font-size: .85rem;
+  font-weight: 700;
+  color: #7c2d12;
+  margin-bottom: .5rem;
+}
+.ok-card {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-left: 4px solid #22c55e;
+  border-radius: var(--r-sm);
+  padding: .8rem 1rem;
+  font-size: .85rem;
+  font-weight: 700;
+  color: #14532d;
+  margin-bottom: .5rem;
+}
+
+/* ─ Pill tags ───────────────────────────────────────────────────── */
+.pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .7rem; }
+.pill {
+  display: flex; align-items: center; gap: .35rem;
+  padding: .4rem .85rem;
+  border-radius: 50px;
+  font-size: .82rem;
+  font-weight: 800;
+  border: 1.5px solid transparent;
+}
+.pill-green  { background:#f0fdf4; border-color:#bbf7d0; color:#14532d; }
+.pill-blue   { background:var(--indigo-50); border-color:var(--border); color:var(--indigo-700); }
+.pill-orange { background:#fff7ed; border-color:#fed7aa; color:#7c2d12; }
+
+/* ─ Vínculos — patient cards ───────────────────────────────────── */
+.patient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.patient-card {
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(12px);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+}
+.patient-card-top {
+  height: 90px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+.patient-card-body { padding: 0 1.5rem 1.5rem; margin-top: -2.5rem; }
+.patient-card-avatar {
+  width: 70px; height: 70px;
+  border-radius: 20px;
+  background: var(--white);
+  border: 4px solid var(--white);
+  box-shadow: var(--shadow-m);
+  font-size: 2.2rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .75rem;
+}
+.patient-card-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+}
+.patient-card-sub {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 1rem;
+}
+.status-badge {
+  font-size: .65rem;
+  padding: .25rem .75rem;
+  border-radius: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.status-green  { background: var(--green-500); color: #fff; }
+.status-orange { background: var(--orange-400); color: #fff; }
+
+/* ─ IA Card ─────────────────────────────────────────────────────── */
+.ia-hero {
+  background: var(--indigo-900);
+  border-radius: var(--r-lg);
+  padding: 2rem;
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.ia-hero::after {
+  content: '';
+  position: absolute;
+  right: -60px; bottom: -60px;
+  width: 200px; height: 200px;
+  background: rgba(99,102,241,.25);
+  border-radius: 50%;
+  filter: blur(40px);
+}
+.ia-hero-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: .6rem;
+}
+.ia-hero-text {
+  color: rgba(255,255,255,.75);
+  font-size: .88rem;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+}
+.ia-suggestion {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  padding: 1rem;
+}
+.ia-suggestion-label {
+  font-size: .65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--indigo-400);
+  margin-bottom: .4rem;
+}
+.ia-suggestion-text {
+  font-size: .85rem;
+  color: rgba(255,255,255,.9);
+  line-height: 1.5;
+}
+
+/* ─ Cuidador — well-being hero ──────────────────────────────────── */
+.wb-hero {
+  background: linear-gradient(135deg, var(--indigo-50) 0%, #e8e4ff 100%);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1.2rem;
+  box-shadow: var(--shadow-s);
+}
+.wb-emoji  { font-size: 4rem; line-height: 1; margin-bottom: .6rem; display: block; }
+.wb-phrase { font-size: 1.15rem; font-weight: 800; color: var(--indigo-950); }
+.wb-sub    { font-size: .85rem; color: var(--gray-400); font-weight: 600; margin-top: .35rem; }
+
+/* ─ Mini stat cards (cuidador) ──────────────────────────────────── */
+.mini-stat {
+  background: rgba(255,255,255,.75);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: var(--shadow-s);
+  padding: 1rem;
+  text-align: center;
+}
+.mini-stat-icon  { font-size: 1.4rem; margin-bottom: .25rem; }
+.mini-stat-value { font-size: 1.8rem; font-weight: 800; color: var(--indigo-950); line-height: 1; }
+.mini-stat-label { font-size: .7rem; font-weight: 700; color: var(--gray-400); margin-top: .25rem; }
+
+/* ─ Botão primário ──────────────────────────────────────────────── */
+[data-testid="stButton"] > button {
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: .85rem !important;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  transition: all .2s ease !important;
+}
+[data-testid="stButton"] > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-m) !important;
+}
+[data-testid="stButton"] > button[kind="primary"] {
+  background: linear-gradient(135deg, var(--indigo-600) 0%, var(--purple-500) 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 15px rgba(79,70,229,.25) !important;
+}
+[data-testid="stButton"] > button[kind="secondary"] {
+  background: var(--white) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  color: var(--gray-600) !important;
+}
+[data-testid="stDownloadButton"] > button {
+  background: var(--indigo-50) !important;
+  color: var(--indigo-700) !important;
+  border: 1.5px solid var(--border) !important;
+  font-weight: 800 !important;
+  border-radius: 14px !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+  background: var(--indigo-600) !important;
+  color: #fff !important;
+  border-color: var(--indigo-600) !important;
+}
+
+/* ─ Formulários ─────────────────────────────────────────────────── */
+[data-testid="stTextInput"] input,
+[data-testid="stSelectbox"] > div,
+[data-testid="stDateInput"] input {
+  border-radius: var(--r-sm) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  background: var(--white) !important;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 700 !important;
+}
+[data-testid="stTextInput"] input:focus {
+  border-color: var(--indigo-500) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15) !important;
+}
+[data-testid="stForm"] {
+  background: var(--white) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  border-radius: var(--r-md) !important;
+  padding: 1.25rem !important;
+  box-shadow: var(--shadow-s) !important;
+}
+
+/* ─ Selectbox da sidebar ─────────────────────────────────────────── */
+[data-testid="stSidebar"] [data-testid="stSelectbox"] > div {
+  border-radius: var(--r-sm) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  background: var(--white) !important;
+  font-weight: 700 !important;
+}
+
+/* ─ Sidebar radio (navegação) ────────────────────────────────────── */
+[data-testid="stSidebar"] [data-testid="stRadio"] label {
+  display: flex !important;
+  align-items: center !important;
+  gap: .8rem !important;
+  padding: .8rem 1rem !important;
+  border-radius: var(--r-sm) !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: .9rem !important;
+  color: var(--gray-400) !important;
+  transition: all .2s ease !important;
+  margin-bottom: .2rem !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+  background: var(--white) !important;
+  color: var(--indigo-600) !important;
+  box-shadow: var(--shadow-s) !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"] + div label,
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-selected="true"] {
+  background: var(--white) !important;
+  color: var(--indigo-600) !important;
+  box-shadow: 0 4px 15px rgba(79,70,229,.12) !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: 0 !important; }
+/* Esconde o indicador circular do radio */
+[data-testid="stSidebar"] [data-testid="stRadio"] [data-testid="stMarkdownContainer"] { display: none !important; }
+[data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"] { display: none !important; }
+
+/* ─ Divider ──────────────────────────────────────────────────────── */
+[data-testid="stDivider"] > div {
+  border-color: var(--gray-200) !important;
+}
+
+/* ─ Dataframe ────────────────────────────────────────────────────── */
+[data-testid="stDataFrame"] {
+  border-radius: var(--r-md) !important;
+  overflow: hidden !important;
+  border: 1.5px solid var(--border) !important;
+  box-shadow: var(--shadow-s) !important;
+}
+
+/* ─ Charts ───────────────────────────────────────────────────────── */
+[data-testid="stVegaLiteChart"],
+[data-testid="stArrowVegaLiteChart"] {
+  border-radius: var(--r-md) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  background: var(--white) !important;
+  padding: .5rem !important;
+}
+
+/* ─ Expander ─────────────────────────────────────────────────────── */
+[data-testid="stExpander"] {
+  border-radius: var(--r-md) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  background: var(--white) !important;
+  box-shadow: var(--shadow-s) !important;
+  overflow: hidden !important;
+}
+
+/* ─ Métricas ─────────────────────────────────────────────────────── */
+[data-testid="stMetric"] {
+  background: rgba(255,255,255,.75) !important;
+  border-radius: var(--r-md) !important;
+  padding: 1rem !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-s) !important;
+}
+
+/* ─ Spinner ──────────────────────────────────────────────────────── */
+[data-testid="stSpinner"] > div {
+  color: var(--indigo-600) !important;
+}
+
+/* ─ Scrollbar amigável ───────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 10px; }
+
+/* ─ Acessibilidade ───────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 3px solid var(--indigo-500) !important;
+  outline-offset: 2px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAV BUTTONS — menu com descrição e estado ativo
+   Usados na sidebar em vez do st.radio
+═══════════════════════════════════════════════════════════════════ */
+
+/* Agrupa items de nav */
+.nav-group-label {
+  font-size: .65rem;
+  font-weight: 800;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  padding: .4rem .5rem .2rem;
+  margin-top: .6rem;
+}
+
+/* ── Sidebar nav buttons — todos os estados ────────────────────── */
+/* Streamlit 1.37+ usa data-testid="baseButton-primary/secondary" */
+
+[data-testid="stSidebar"] button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--gray-400) !important;
+  text-align: left !important;
+  padding: .65rem 1rem !important;
+  border-radius: var(--r-sm) !important;
+  width: 100% !important;
+  font-weight: 600 !important;
+  font-size: .87rem !important;
+  line-height: 1.3 !important;
+  transition: background .15s, color .15s !important;
+  border-left: 3px solid transparent !important;
+  justify-content: flex-start !important;
+  letter-spacing: 0 !important;
+}
+[data-testid="stSidebar"] button:hover {
+  background: var(--white) !important;
+  color: var(--indigo-600) !important;
+  transform: none !important;
+}
+
+/* Botão ATIVO (type="primary") — cobre tanto kind= quanto data-testid= */
+[data-testid="stSidebar"] button[data-testid="baseButton-primary"],
+[data-testid="stSidebar"] button[kind="primary"] {
+  background: var(--white) !important;
+  color: var(--indigo-600) !important;
+  box-shadow: 0 2px 12px rgba(79,70,229,.12) !important;
+  border-left: 3px solid var(--indigo-500) !important;
+  font-weight: 800 !important;
+}
+[data-testid="stSidebar"] button[data-testid="baseButton-primary"]:hover,
+[data-testid="stSidebar"] button[kind="primary"]:hover {
+  background: var(--white) !important;
+  box-shadow: 0 4px 16px rgba(79,70,229,.18) !important;
+}
+
+/* Botão INATIVO (type="secondary") */
+[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+[data-testid="stSidebar"] button[kind="secondary"] {
+  background: transparent !important;
+  border-left-color: transparent !important;
+  color: var(--gray-400) !important;
+  box-shadow: none !important;
+}
+
+/* Botão de logout na sidebar */
+[data-testid="stSidebar"] .sidebar-profile button {
+  background: rgba(0,0,0,.04) !important;
+  border: 0.5px solid var(--gray-200) !important;
+  border-left: 0.5px solid var(--gray-200) !important;
+  color: var(--gray-400) !important;
+  font-size: .82rem !important;
+  font-weight: 600 !important;
+  padding: .4rem .8rem !important;
+  width: 100% !important;
+  border-radius: 8px !important;
+  margin-top: .4rem !important;
+}
+[data-testid="stSidebar"] .sidebar-profile button:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* Linha divisória de grupo na sidebar */
+.nav-divider {
+  height: 1px;
+  background: var(--gray-200);
+  margin: .5rem 0;
+}
+
+
+/* Descrição da seção atual — aparece no topo do conteúdo */
+.page-header {
+  margin-bottom: 1.8rem;
+}
+.page-title {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1.2;
+  margin-bottom: .3rem;
+}
+.page-subtitle {
+  font-size: .92rem;
+  color: var(--gray-400);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Descrição inline abaixo do botão de nav ativo */
+.nav-desc {
+  font-size: .72rem;
+  color: var(--gray-400);
+  font-weight: 600;
+  padding: 0 1rem .5rem 1.2rem;
+  line-height: 1.4;
+}
+
+/* ── Tela de perfil / edição ─────────────────────────────────────── */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.profile-avatar-xl {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo-600), var(--purple-500));
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 18px rgba(79,70,229,.30);
+  flex-shrink: 0;
+}
+.profile-name-big {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+}
+.profile-role-badge {
+  display: inline-block;
+  background: var(--indigo-50);
+  color: var(--indigo-700);
+  font-size: .72rem;
+  font-weight: 800;
+  padding: .2rem .75rem;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-top: .3rem;
+  border: 1px solid var(--border);
+}
+
+/* ── Dados da criança ─────────────────────────────────────────────── */
+.crianca-card {
+  background: rgba(255,255,255,.75);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-s);
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 1.2rem;
+}
+.crianca-avatar {
+  width: 64px; height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  font-size: 2rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .75rem;
+  box-shadow: var(--shadow-s);
+}
+.crianca-nome {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+}
+.crianca-info {
+  font-size: .8rem;
+  color: var(--gray-400);
+  font-weight: 600;
+  margin-top: .2rem;
+}
+
+/* ── Ficha clínica do profissional ───────────────────────────────── */
+.ficha-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--gray-200);
+  font-size: .88rem;
+}
+.ficha-row:last-child { border-bottom: none; }
+.ficha-label {
+  font-weight: 700;
+  color: var(--gray-400);
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.ficha-valor {
+  font-weight: 800;
+  color: var(--indigo-950);
+  text-align: right;
+}
+
+/* ── Seção "dica" ─────────────────────────────────────────────────── */
+.tip-card {
+  background: rgba(238,242,255,.85);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--indigo-500);
+  border-radius: var(--r-sm);
+  padding: .9rem 1.1rem;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--indigo-950);
+  line-height: 1.5;
+  margin-bottom: .5rem;
+}
+
+/* ── Ajuste: glasss-card transparência padrão ─────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow: var(--shadow-s);
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 1.2rem;
+}
+
+/* ── KPI grid atualizado ──────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi-card {
+  background: rgba(255,255,255,.75);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: var(--shadow-s);
+  padding: 1.2rem 1.1rem;
+  border-bottom: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-label {
+  font-size: .65rem;
+  font-weight: 800;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: .5rem;
+}
+.kpi-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1.1;
+  margin-bottom: .3rem;
+}
+.kpi-sub {
+  font-size: .75rem;
+  font-weight: 700;
+}
+.kpi-accent-indigo { border-bottom-color: var(--indigo-500); }
+.kpi-accent-green  { border-bottom-color: var(--green-500);  }
+.kpi-accent-orange { border-bottom-color: var(--orange-400); }
+.kpi-accent-blue   { border-bottom-color: var(--blue-400);   }
+.kpi-sub-green  { color: var(--green-500);  }
+.kpi-sub-orange { color: var(--orange-400); }
+.kpi-sub-blue   { color: var(--blue-400);   }
+
+/* ═══════════════════════════════════════════════════════════════════
+   COMPONENTES ESPECÍFICOS DO DASHBOARD
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Mini stat (Hoje - cuidador) ─────────────────────────────────── */
+.mini-stat {
+  background: rgba(255,255,255,.72);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,.70);
+  box-shadow: var(--shadow-s);
+  padding: 1.1rem 1rem;
+  text-align: center;
+}
+.mini-stat-icon  { font-size: 1.6rem; margin-bottom: .3rem; }
+.mini-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1.1;
+}
+.mini-stat-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  margin-top: .3rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* ── Well-being Hero (Hoje - cuidador) ──────────────────────────── */
+.wb-hero {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow: var(--shadow-s);
+  padding: 1.8rem 1.6rem;
+  text-align: center;
+  margin-bottom: 1.2rem;
+  position: relative;
+  overflow: hidden;
+}
+.wb-hero::after {
+  content: 'PICTA';
+  position: absolute; bottom: 8px; right: 14px;
+  font-size: .6rem; font-weight: 800;
+  color: rgba(79,70,229,.12); letter-spacing: .2em;
+}
+.wb-emoji  { font-size: 4rem; line-height: 1; display: block; margin-bottom: .5rem; }
+.wb-phrase { font-size: 1.2rem; font-weight: 800; color: var(--indigo-950); }
+.wb-sub    { font-size: .84rem; color: var(--gray-400); font-weight: 600; margin-top: .4rem; }
+
+/* ── Diary items (Hoje / Histórico / Diário clínico) ────────────── */
+.diary-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 1rem;
+  background: rgba(255,255,255,.65);
+  border-radius: 14px;
+  margin-bottom: .4rem;
+  border: 1px solid rgba(255,255,255,.80);
+  box-shadow: 0 2px 8px rgba(31,38,135,.04);
+  border-left: 3px solid var(--indigo-300);
+}
+.diary-emoji { font-size: 1.35rem; flex-shrink: 0; }
+.diary-name  {
+  font-size: .88rem; font-weight: 800;
+  color: var(--indigo-950); flex: 1;
+}
+.diary-time  { font-size: .72rem; color: var(--gray-400); font-weight: 600; }
+.diary-badge {
+  font-size: .65rem; font-weight: 800;
+  padding: .2rem .65rem; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: .05em;
+  flex-shrink: 0;
+}
+
+/* Variantes de badge */
+.badge-emocao      { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.badge-acao        { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+.badge-necessidade { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+/* ── Date group (Histórico) ─────────────────────────────────────── */
+.date-group {
+  display: flex; align-items: center; gap: .6rem;
+  margin: 1.1rem 0 .5rem;
+}
+.date-badge {
+  background: rgba(79,70,229,.08);
+  color: var(--indigo-600);
+  border-radius: 50px;
+  padding: .22rem .85rem;
+  font-size: .72rem; font-weight: 800;
+  border: 1px solid rgba(79,70,229,.16);
+  white-space: nowrap;
+}
+.date-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(79,70,229,.18), transparent);
+}
+
+/* ── Section header (reutilizável) ──────────────────────────────── */
+.sec-header {
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  margin-bottom: .7rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+/* ── Patient card (Vínculos / Pacientes) ────────────────────────── */
+.patient-card {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(12px);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,.70);
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+  margin-bottom: .9rem;
+}
+.patient-card-top {
+  height: 72px; padding: .9rem 1rem;
+  display: flex; justify-content: flex-end; align-items: flex-start;
+}
+.patient-card-body {
+  padding: 0 1.3rem 1.3rem;
+  margin-top: -1.8rem;
+}
+.patient-card-avatar {
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  background: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(31,38,135,.10);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .7rem;
+  font-size: 2rem;
+}
+.patient-card-name { font-size: 1.05rem; font-weight: 800; color: var(--indigo-950); }
+.patient-card-sub  {
+  font-size: .76rem; font-weight: 700;
+  margin-top: .2rem; margin-bottom: .8rem;
+}
+
+/* ── Status badges ──────────────────────────────────────────────── */
+.status-badge {
+  font-size: .6rem; padding: .3rem .8rem;
+  border-radius: 20px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.status-green  { background: #22c55e; color: #fff; box-shadow: 0 2px 8px rgba(34,197,94,.3); }
+.status-orange { background: #f97316; color: #fff; box-shadow: 0 2px 8px rgba(249,115,22,.3); }
+
+/* ── Alert / OK cards ───────────────────────────────────────────── */
+.alert-card {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #f97316;
+  border-radius: 10px;
+  padding: .8rem 1.1rem;
+  margin-bottom: .5rem;
+  font-size: .85rem; font-weight: 700;
+  color: #9a3412; line-height: 1.5;
+}
+.ok-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #22c55e;
+  border-radius: 10px;
+  padding: .8rem 1.1rem;
+  margin-bottom: .5rem;
+  font-size: .85rem; font-weight: 700;
+  color: #166534;
+}
+
+/* ── Insights IA Hero ───────────────────────────────────────────── */
+.ia-hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+  border-radius: var(--r-lg);
+  padding: 2rem 1.8rem;
+  color: rgba(255,255,255,.90);
+  box-shadow: 0 8px 32px rgba(67,56,202,.30);
+  margin-bottom: 1.2rem;
+  position: relative;
+  overflow: hidden;
+}
+.ia-hero::before {
+  content: '';
+  position: absolute; bottom: -40px; right: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(165,180,252,.08);
+}
+.ia-hero-title {
+  font-size: .78rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .09em;
+  color: rgba(165,180,252,.80);
+  margin-bottom: .6rem;
+}
+.ia-hero-text {
+  font-size: .95rem; font-weight: 600;
+  line-height: 1.65; margin-bottom: 1.2rem;
+}
+.ia-suggestion {
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+}
+.ia-suggestion-label {
+  font-size: .72rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: rgba(165,180,252,.80); margin-bottom: .4rem;
+}
+.ia-suggestion-text {
+  font-size: .88rem; font-weight: 600; line-height: 1.55;
+}
+
+/* ── Sidebar ajustes ────────────────────────────────────────────── */
+.sidebar-select-label {
+  font-size: .68rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--gray-400); margin-bottom: .3rem; padding: 0 .3rem;
+}
+
+/* ── Glassmorphism ajuste padrão Streamlit ──────────────────────── */
+[data-testid="stSidebar"] {
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--gray-200) !important;
+}
+[data-testid="stSidebar"] [data-testid="stSelectbox"] > div {
+  background: rgba(255,255,255,.72) !important;
+}
+
+/* ── Expander ───────────────────────────────────────────────────── */
+[data-testid="stExpander"] {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--gray-200) !important;
+  background: rgba(255,255,255,.65) !important;
+  box-shadow: var(--shadow-s) !important;
+}
+[data-testid="stExpander"] summary {
+  font-weight: 700 !important;
+  font-size: .88rem !important;
+}
+
+/* ── Download button ────────────────────────────────────────────── */
+[data-testid="stDownloadButton"] > button {
+  background: rgba(79,70,229,.07) !important;
+  color: var(--indigo-600) !important;
+  border: 1.5px solid rgba(79,70,229,.22) !important;
+  border-radius: var(--r-sm) !important;
+  font-weight: 800 !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+  background: var(--indigo-600) !important;
+  color: #fff !important;
+  border-color: var(--indigo-600) !important;
+}
+
+/* ── Dataframe (exportação) ─────────────────────────────────────── */
+[data-testid="stDataFrame"] {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--gray-200) !important;
+  overflow: hidden;
+}
+
+/* ── Responsivo ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .page-title { font-size: 1.3rem; }
+  .wb-emoji   { font-size: 3rem; }
+  .mini-stat-value { font-size: 1.6rem; }
+  .kpi-value  { font-size: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (prefers-contrast: high) {
+  :root { --indigo-600: #3730a3; --gray-400: #374151; }
+  .diary-item { border-left-width: 4px; }
+}
+*:focus-visible {
+  outline: 3px solid var(--indigo-500) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Chart label (substitui glass-card em volta de gráficos nativos) */
+.chart-label {
+  font-size: .85rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  margin-bottom: .3rem;
+  padding: .5rem .2rem .2rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  border-bottom: 2px solid var(--gray-100);
+}
+
+/* ── Streamlit native chart containers — estilo leve ─────────────── */
+[data-testid="stVegaLiteChart"],
+[data-testid="stArrowVegaLiteChart"] {
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--gray-200) !important;
+  background: rgba(255,255,255,.65) !important;
+  padding: .6rem !important;
+}
+
+/* ── Ajuste: sidebar nunca colapsa no mobile ─────────────────────── */
+[data-testid="stSidebar"][aria-expanded="false"] {
+  min-width: 0 !important;
+  width: 0 !important;
+}
+/* Garante que o botão de toggle da sidebar seja visível */
+[data-testid="collapsedControl"] {
+  display: flex !important;
+}
+
+/* ── Remove espaços extras entre seções de markdown ──────────────── */
+[data-testid="stMarkdownContainer"] > div:empty {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANTI-FANTASMA — Remove espaços e contêineres vazios do Streamlit
+═══════════════════════════════════════════════════════════════════ */
+
+/* Remove margens internas dos wrappers de markdown */
+[data-testid="stMarkdownContainer"] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove espaço entre elementos verticais no main */
+[data-testid="stMain"] [data-testid="stVerticalBlock"] {
+  gap: 0.5rem !important;
+}
+
+/* Evita que containers vazios gerem altura */
+[data-testid="stMarkdownContainer"]:empty,
+[data-testid="stMarkdownContainer"] > p:empty,
+[data-testid="stMarkdownContainer"] > div:empty {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove padding extra do bloco principal */
+[data-testid="stMainBlockContainer"] {
+  padding-top: 1.4rem !important;
+  padding-bottom: 2rem !important;
+}
+
+/* Sidebar: remove gap extra entre elementos */
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+  gap: 0 !important;
+}
+
+/* Garante que cada st.markdown com glass-card não empurre outros */
+.glass-card {
+  margin-bottom: .9rem !important;
+}
+.glass-card:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Remove a linha azul de borda inferior do st.radio e st.selectbox */
+[data-testid="stSelectbox"] [data-baseweb="select"] {
+  border-radius: var(--r-sm) !important;
+}
+
+/* Ajuste fino do page-header */
+.page-header {
+  margin-bottom: 1.4rem;
+}
+.page-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1.2;
+  margin-bottom: .25rem;
+}
+.page-subtitle {
+  font-size: .9rem;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+
+/* KPI grid: espaçamento exato */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .9rem;
+  margin-bottom: 1rem;
+}
+.kpi-card {
+  background: rgba(255,255,255,.78);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow: var(--shadow-s);
+  padding: 1.1rem 1rem .9rem;
+  border-bottom: 4px solid transparent;
+}
+.kpi-label {
+  font-size: .63rem;
+  font-weight: 800;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .4rem;
+}
+.kpi-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  line-height: 1.1;
+  margin-bottom: .25rem;
+}
+.kpi-sub { font-size: .72rem; font-weight: 700; }
+.kpi-accent-indigo { border-bottom-color: #4f46e5; }
+.kpi-accent-green  { border-bottom-color: #22c55e; }
+.kpi-accent-orange { border-bottom-color: #f97316; }
+.kpi-accent-blue   { border-bottom-color: #38bdf8; }
+.kpi-sub-blue   { color: #38bdf8; }
+.kpi-sub-green  { color: #22c55e; }
+.kpi-sub-orange { color: #f97316; }
+
+/* Diary items: linha limpa */
+.diary-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .65rem .9rem;
+  background: rgba(255,255,255,.65);
+  border-radius: 12px;
+  margin-bottom: .35rem;
+  border: 1px solid rgba(255,255,255,.80);
+  border-left: 3px solid #6366f1;
+}
+.diary-item:last-child { margin-bottom: 0; }
+
+/* Sec header sem margin-top excessiva */
+.sec-header {
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  margin: 0 0 .75rem 0;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR — CONTROLES VISÍVEIS SEM TEXTO BRUTO DE ÍCONE
+═══════════════════════════════════════════════════════════════════ */
+
+/* Normaliza o botão de colapso/expansão da sidebar em todos os estados. */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+button[data-testid="baseButton-headerNoPadding"],
+button[data-testid="stBaseButton-headerNoPadding"],
+button[data-testid="stExpandSidebarButton"],
+[aria-label="Close sidebar"],
+[aria-label="Open sidebar"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stSidebarCollapsedControl"]::after,
+[data-testid="collapsedControl"]::after,
+button[data-testid="stExpandSidebarButton"]::after,
+[aria-label="Open sidebar"]::after {
+  content: "☰";
+  color: var(--indigo-700);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+[aria-label="Close sidebar"]::after {
+  content: "×";
+  color: var(--indigo-700);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"],
+[data-testid="stHeader"] [data-testid="stIconMaterial"],
+[data-testid="stToolbar"] [data-testid="stIconMaterial"] {
+  display: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Garante que a sidebar nunca entre no estado colapsado visualmente */
+[data-testid="stSidebar"][aria-expanded="false"] {
+  min-width: 0 !important;
+  width: 0 !important;
+  transform: translateX(-100%) !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Remove o 1px de height dos components.html usados para escrever cookies */
+iframe[height="1"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  display: block !important;  /* mantém visível para JS executar, mas sem espaço */
+  overflow: hidden !important;
+  border: none !important;
+}
+
+/* Sidebar width padrão */
+[data-testid="stSidebar"] {
+  min-width: 240px !important;
+  max-width: 300px !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+  min-width: 240px !important;
+}
+
+@media (max-width: 900px) {
+  [data-testid="stHeader"] {
+    display: block !important;
+    background: transparent !important;
+    height: 0 !important;
+    pointer-events: none !important;
+  }
+  [data-testid="stToolbar"] {
+    display: flex !important;
+    pointer-events: none !important;
+  }
+  [data-testid="stToolbar"] button:not([data-testid="stExpandSidebarButton"]) {
+    display: none !important;
+  }
+  [data-testid="stExpandSidebarButton"] {
+    position: fixed !important;
+    top: .55rem !important;
+    right: .65rem !important;
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.92) !important;
+    border: 1px solid var(--gray-200) !important;
+    box-shadow: var(--shadow-s) !important;
+    z-index: 1200 !important;
+    pointer-events: auto !important;
+  }
+  [data-testid="stMainBlockContainer"] {
+    padding: 1rem !important;
+  }
+  [data-testid="stSidebar"] {
+    max-width: min(86vw, 300px) !important;
+    background: var(--bg-sidebar) !important;
+    box-shadow: 12px 0 28px rgba(31,38,135,.16) !important;
+    z-index: 1000 !important;
+  }
+  [data-testid="stSidebar"] > div:first-child {
+    background: var(--bg-sidebar) !important;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .diary-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-title {
+    font-size: 1.35rem;
+  }
+  .glass-card,
+  .kpi-card,
+  .mini-stat,
+  .patient-card {
+    border-radius: 12px;
+  }
+  [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+  }
+  [data-testid="column"] {
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+/* Ajustes finais de estabilidade visual e controles nativos do Streamlit */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+button[data-testid="stExpandSidebarButton"],
+[aria-label="Open sidebar"] {
+  left: .65rem !important;
+  right: auto !important;
+}
+
+[data-testid="stSidebar"][aria-expanded="true"],
+[data-testid="stSidebar"]:not([aria-expanded="false"]) {
+  transform: none !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+[data-testid="stSidebarCollapsedControl"]::after,
+[data-testid="collapsedControl"]::after,
+button[data-testid="stExpandSidebarButton"]::after,
+[aria-label="Open sidebar"]::after {
+  content: "\2630" !important;
+}
+
+[aria-label="Close sidebar"]::after {
+  content: "\00D7" !important;
+}
+
+[data-testid="stSidebarCollapseButton"] {
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarCollapsedControl"] button,
+[data-testid="collapsedControl"] button,
+button[data-testid="stExpandSidebarButton"],
+[aria-label="Open sidebar"] {
+  width: 2.35rem !important;
+  min-width: 2.35rem !important;
+  height: 2.35rem !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+[data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"],
+[data-testid="collapsedControl"] [data-testid="stIconMaterial"],
+button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"],
+[aria-label="Open sidebar"] [data-testid="stIconMaterial"] {
+  position: relative !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"]::before,
+[data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"]::before,
+[data-testid="collapsedControl"] [data-testid="stIconMaterial"]::before,
+button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"]::before,
+[aria-label="Open sidebar"] [data-testid="stIconMaterial"]::before {
+  content: "\2039";
+  color: var(--indigo-700);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 1.65rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+[data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"]::before,
+[data-testid="collapsedControl"] [data-testid="stIconMaterial"]::before,
+button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"]::before,
+[aria-label="Open sidebar"] [data-testid="stIconMaterial"]::before {
+  content: "\2630";
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+[data-testid="stExpander"] [data-testid="stIconMaterial"],
+[data-testid="stExpander"] .material-icons,
+[data-testid="stExpander"] .material-symbols-rounded,
+[data-testid="stExpander"] .material-symbols-outlined {
+  display: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stExpander"] details > summary,
+.picta-details > summary {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: .8rem 2.35rem .8rem 1rem !important;
+  color: var(--indigo-950) !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  list-style: none;
+}
+
+[data-testid="stExpander"] details > summary::marker,
+.picta-details > summary::marker {
+  content: "";
+}
+
+[data-testid="stExpander"] details > summary::after,
+.picta-details > summary::after {
+  content: "\25BE";
+  position: absolute;
+  right: .95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--indigo-600);
+  font-size: .9rem;
+  line-height: 1;
+}
+
+[data-testid="stExpander"] details[open] > summary::after,
+.picta-details[open] > summary::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.picta-details {
+  margin: .9rem 0;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.75);
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+}
+
+.picta-details pre {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--gray-700);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: .86rem;
+  line-height: 1.55;
+}
+
+.picta-summary-details > summary {
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+
+.picta-summary-details > summary small {
+  width: 100%;
+  color: var(--gray-400);
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.picta-summary-body {
+  padding: 0 1rem 1rem;
+  color: var(--gray-700);
+}
+
+.picta-summary-body p {
+  margin: 0 0 .9rem;
+  line-height: 1.5;
+}
+
+.picta-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.picta-summary-grid > div {
+  min-width: 0;
+  padding: .75rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--gray-200);
+  background: rgba(255,255,255,.68);
+}
+
+.picta-summary-grid strong,
+.picta-summary-grid span {
+  display: block;
+}
+
+.picta-summary-grid strong {
+  color: var(--indigo-950);
+  font-size: .78rem;
+  margin-bottom: .25rem;
+}
+
+.picta-summary-grid span {
+  color: var(--gray-700);
+  font-size: .82rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .picta-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-testid="stDateInput"] input,
+[data-testid="stTextInput"] input {
+  min-height: 42px;
+}
+
+.diary-item {
+  min-width: 0;
+}
+
+.diary-name,
+.patient-card-name,
+.page-title,
+.page-subtitle {
+  overflow-wrap: anywhere;
+}

@@ -15,6 +15,7 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+logs/*.log
 
 # Secrets do Streamlit — NÃO versionar (configurar no painel do Streamlit Cloud)
 .streamlit/secrets.toml

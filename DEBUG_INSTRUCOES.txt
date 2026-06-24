@@ -1,0 +1,1 @@
+Abra logs/picta_debug.log após os testes.

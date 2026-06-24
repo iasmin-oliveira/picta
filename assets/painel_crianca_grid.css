@@ -1,0 +1,412 @@
+
+
+/* ── Oculta elementos nativos do Streamlit que poluem a UI ── */
+[data-testid="stSpinner"],
+[data-testid="stStatusWidget"],
+[data-testid="stDeployButton"],
+[data-testid="stToolbar"],
+[data-testid="stHeader"],
+footer, #MainMenu { display: none !important; }
+
+/* ── Fade rápido ao rerun — elimina o flash branco ── */
+[data-testid="stAppViewContainer"] {
+    background: #F5F0FF;
+}
+
+/* ── Padding do bloco principal ── */
+[data-testid="stAppViewBlockContainer"] {
+    padding-top: 0 !important;
+    padding-bottom: 0.5rem !important;
+    max-width: 100% !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] { border: none !important; box-shadow: none !important; }
+
+/* ── Header ── */
+.pc-header {
+    background: #E8E0FF;
+    color: white;
+    padding: 0.9rem 1.1rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0 0 22px 22px;
+    margin-bottom: 0.9rem;
+    box-shadow: 0 4px 18px rgba(78,48,128,0.28);
+    color: var(--purple);
+}
+.pc-saudacao { font-family: "Segoe UI", system-ui, sans-serif; font-size: 1.25rem; font-weight: 900; letter-spacing: 0; }
+.pc-sub      { font-family: "Segoe UI", system-ui, sans-serif; font-size: 0.8rem; opacity: 0.82; margin-top: 3px; }
+
+/* ── Botão Sair (dentro do header) ── */
+.pc-sair-wrap button {
+    background: rgba(255,255,255,0.14) !important;
+    color: white !important;
+    border: 1.5px solid rgba(255,255,255,0.38) !important;
+    border-radius: 10px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    font-family: "Segoe UI", system-ui, sans-serif !important;
+    padding: 0.28rem 0.65rem !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+}
+.pc-sair-wrap button:hover {
+    background: rgba(255,255,255,0.26) !important;
+}
+
+/* ── Menu de categorias ── */
+.pc-cat-menu {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0 0.9rem;
+    margin-bottom: 0.75rem;
+}
+.pc-cat-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 155px;
+    min-height: 52px;
+    padding: 0.6rem 0.3rem;
+    border-radius: 14px;
+    border: 2px solid #E8E0FF;
+    background: white;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #7A6EA0;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.08s;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.06);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    text-align: center;
+    text-decoration: none !important;
+}
+.pc-cat-tab span:last-child { color: inherit; line-height: 1.12; }
+.pc-cat-tab .tab-ico { font-size: 1.25rem; line-height: 1; }
+.pc-cat-tab.active {
+    background: var(--pc-sel, #7B4FA6);
+    border-color: var(--pc-sel, #7B4FA6);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+}
+.pc-cat-tab:not(.active):hover {
+    border-color: var(--pc-sel, #C4B4E8);
+    transform: translateY(-1px);
+}
+
+/* ── Feedback bar ── */
+#pc-feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0.9rem 0.7rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 14px;
+    background: white;
+    border: 2px solid #EDE8FF;
+    min-height: 54px;
+    box-shadow: 0 2px 8px rgba(107,79,160,0.05);
+    transition: border-color 0.12s, background 0.12s;
+}
+#pc-feedback.ativo {
+    border-color: var(--pc-sel-g, #7B4FA6);
+    background: var(--pc-bg-g, #F5F0FF);
+}
+#pc-feedback .fb-ico  { font-size: 1.7rem; flex-shrink: 0; }
+#pc-feedback .fb-info { flex: 1; }
+#pc-feedback .fb-nome { font-family: "Segoe UI", system-ui, sans-serif; font-size: 0.95rem; font-weight: 900; color: #2D2145; }
+#pc-feedback .fb-cat  { font-family: "Segoe UI", system-ui, sans-serif; font-size: 0.7rem; color: #9B8ABE; margin-top: 1px; }
+#pc-feedback .fb-hint { font-family: "Segoe UI", system-ui, sans-serif; font-size: 0.72rem; color: #B8AED8; font-style: italic; }
+
+/* ── Painéis por categoria ── */
+.pc-painel { display: none; padding: 0 0.9rem; }
+.pc-painel.ativo { display: block; }
+
+/* ── Grid de cards ── */
+.pc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.55rem;
+}
+
+/* ── Card de pictograma ── */
+.pc-card {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid #EDE8FF;
+    padding: 0.85rem 0.35rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s, border-color 0.1s, background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.05);
+}
+.pc-card:active  { transform: scale(0.93) !important; }
+.pc-card.ativo {
+    border-color: var(--pc-sel, #7B4FA6);
+    background: var(--pc-bg, #F5F0FF);
+    transform: scale(1.04);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+}
+.pc-card .card-ico  { font-size: 2.1rem; line-height: 1; }
+.pc-card .card-nome {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 0.6rem;
+    font-weight: 900;
+    text-align: center;
+    color: #5A4A80;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+.pc-card.ativo .card-nome { color: var(--pc-text, #2D2145); }
+
+/* ── Acessibilidade ── */
+.pc-card:focus-visible, .pc-cat-tab:focus-visible {
+    outline: 3px solid #7B4FA6 !important;
+    outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+/* Menu e cards nativos do Streamlit usados no painel atual */
+[data-testid="stRadio"] > div {
+    gap: 0.45rem !important;
+    flex-wrap: wrap !important;
+}
+[data-testid="stRadio"] label {
+    background: #ffffff !important;
+    border: 2px solid #E8E0FF !important;
+    border-radius: 14px !important;
+    padding: 0.55rem 0.8rem !important;
+    min-height: 48px !important;
+    font-weight: 800 !important;
+    color: #5A4A80 !important;
+}
+[data-testid="stRadio"] [aria-checked="true"] + div label,
+[data-testid="stRadio"] label:has(input:checked) {
+    background: #6B4FA0 !important;
+    border-color: #6B4FA0 !important;
+    color: #ffffff !important;
+}
+[data-testid="stButton"] > button {
+    height: 78px !important;
+    min-height: 78px !important;
+    white-space: pre-line !important;
+    border-radius: 14px !important;
+    border: 2px solid #EDE8FF !important;
+    background: #ffffff !important;
+    color: #2D2145 !important;
+    font-weight: 900 !important;
+    font-size: 1.12rem !important;
+    line-height: 1.12 !important;
+    padding: 0.35rem 0.25rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.05) !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transition: border-color .08s ease, color .08s ease !important;
+}
+[data-testid="stButton"] > button::first-line {
+    font-size: 2.25rem !important;
+    line-height: 0.9 !important;
+}
+[data-testid="stButton"] > button:hover,
+[data-testid="stButton"] > button:focus,
+[data-testid="stButton"] > button:active {
+    border-color: #6B4FA0 !important;
+    color: #6B4FA0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.05) !important;
+}
+.pc-sair-wrap [data-testid="stButton"] > button,
+.pc-sair-wrap button {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+}
+.pc-sair-wrap [data-testid="stButton"] > button::first-line,
+.pc-sair-wrap button::first-line {
+    font-size: 0.82rem !important;
+}
+.pc-logout-link {
+    height: 78px;
+    min-height: 78px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 2px solid #EDE8FF;
+    color: #2D2145 !important;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none !important;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.05);
+}
+.pc-logout-link:hover,
+.pc-logout-link:focus {
+    border-color: #6B4FA0;
+    color: #6B4FA0 !important;
+    text-decoration: none !important;
+}
+.pc-native-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 0.4rem;
+}
+.pc-picto-button {
+    height: 78px;
+    min-height: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 14px;
+    border: 2px solid #EDE8FF;
+    background: #ffffff;
+    color: #2D2145 !important;
+    box-shadow: 0 2px 6px rgba(107,79,160,0.05);
+    text-align: center;
+    text-decoration: none !important;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transition: border-color .08s ease, color .08s ease;
+}
+.pc-picto-button:hover,
+.pc-picto-button:focus,
+.pc-picto-button:active {
+    border-color: #6B4FA0;
+    color: #6B4FA0 !important;
+    text-decoration: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+.pc-picto-button:focus-visible {
+    outline: 3px solid #7B4FA6;
+    outline-offset: 2px;
+}
+.pc-picto-emoji {
+    display: block;
+    font-size: clamp(2rem, 3.2vw, 2.65rem);
+    line-height: 0.95;
+    width: 100%;
+}
+.pc-picto-name {
+    display: block;
+    width: 100%;
+    color: inherit;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 0.86rem;
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.pc-feedback-top {
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: 50%;
+    z-index: 999999;
+    width: min(720px, calc(100vw - 2rem));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 0;
+    padding: .85rem 1rem;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 2px solid #D4F0E4;
+    box-shadow: 0 2px 10px rgba(61,184,108,0.10);
+    color: #21452f;
+    font-weight: 800;
+    max-height: 92px;
+    pointer-events: none;
+    animation: pc-feedback-life 4s ease forwards;
+}
+.pc-feedback-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.pc-feedback-text {
+    display: flex;
+    flex-direction: column;
+    gap: .12rem;
+    line-height: 1.18;
+}
+.pc-feedback-text small {
+    color: #5d7f6a;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+.pc-header-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+@keyframes pc-feedback-life {
+    0%, 78% {
+        opacity: 1;
+        max-height: 92px;
+        padding-top: .85rem;
+        padding-bottom: .85rem;
+    }
+    100% {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-color: transparent;
+        overflow: hidden;
+    }
+}
+@media (max-width: 720px) {
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+    [data-testid="column"] {
+        min-width: calc(50% - .5rem) !important;
+        flex: 1 1 calc(50% - .5rem) !important;
+    }
+    .pc-header {
+        border-radius: 0 0 16px 16px;
+        padding: 0.8rem;
+    }
+    .pc-native-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .pc-picto-emoji {
+        font-size: 2.35rem;
+    }
+    .pc-picto-name {
+        font-size: 0.82rem;
+    }
+}

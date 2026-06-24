@@ -1,76 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
 
-html, body, [class*="css"] { font-family: 'Nunito', sans-serif !important; }
-
-:root {
-    --bg-page:    #F5F0FF;
-    --lavender:   #E8E0FF;
-    --mint:       #D4F0E4;
-    --peach:      #FFE8D8;
-    --sky:        #D6E8FF;
-    --purple:     #6B4FA0;
-    --text-main:  #2D2145;
-    --text-muted: #8B7EA8;
-    --white:      #FFFFFF;
-    --shadow:     rgba(107,79,160,0.10);
-    --border-light: #DDD6FE;
+/* Reset para ocupar a tela toda no Streamlit */
+div[data-testid="stAppViewContainer"] {
+    background-color: #f4f6fb;
+    font-family: 'Quicksand', sans-serif;
 }
 
-[data-testid="stAppViewContainer"] { background: var(--bg-page); }
-[data-testid="stHeader"], [data-testid="stToolbar"] { display: none; }
-#MainMenu, footer { visibility: hidden; }
-
-/* ── Cabeçalho ── */
-.dash-header {
-    background: var(--mint);
-    border-radius: 24px;
-    padding: 1.1rem 1.5rem;
-    margin-bottom: 1.6rem;
-    box-shadow: 0 3px 14px var(--shadow);
-    display: flex; align-items: center; justify-content: space-between;
-}
-.dash-header h2 { color: #155F40; font-size: 1.35rem; font-weight: 900; margin: 0; }
-.dash-header p  { color: #2D6B50; font-size: 0.85rem; margin: 0.25rem 0 0; font-weight: 700; }
-
-/* ── Métricas ── */
-[data-testid="stMetric"] {
-    background: var(--white) !important;
-    border-radius: 18px !important;
-    padding: 1rem 1.2rem !important;
-    box-shadow: 0 2px 10px var(--shadow) !important;
-    border-top: 4px solid var(--lavender) !important;
-}
-[data-testid="stMetricLabel"] { font-weight: 800 !important; color: var(--text-muted) !important; }
-[data-testid="stMetricValue"] { color: var(--purple) !important; font-weight: 900 !important; }
-
-/* ── Selectbox ── */
-[data-testid="stSelectbox"] > div > div {
-    border-radius: 14px !important;
-    border: 2.5px solid var(--lavender) !important;
-    background: var(--white) !important;
+.glass-card {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05) !important;
+    padding: 1.5rem;
 }
 
-/* ── Coming soon box ── */
-.coming-soon {
-    background: linear-gradient(135deg, var(--lavender), var(--sky));
-    border: 2px dashed var(--border-light);
-    border-radius: 20px; padding: 2rem;
-    text-align: center; color: var(--text-main);
+.btn-primary {
+    background: linear-gradient(135deg, #7c4dff 0%, #9e7aff 100%);
+    color: white !important;
+    border-radius: 16px;
+    padding: 10px 25px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
 }
 
-/* ── Botão sair — escopo por key ── */
-[data-testid="stButton"]:has(button[kind]) button {
-    min-height: unset !important;
-    background: var(--white) !important;
-    border: 2px solid var(--border-light) !important;
-    border-radius: 12px !important;
-    color: var(--text-muted) !important;
+/* Esconder elementos nativos do Streamlit que atrapalham o layout */
+header {visibility: hidden;}
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* Configuração Global */
+.stApp {
+    font-family: 'Quicksand', sans-serif !important;
+    background-color: #f4f6fb !important;
+}
+
+/* Glassmorphism Card */
+/* Estilo para os Cards que não estavam carregando */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05) !important;
+    padding: 2rem !important;
+    margin-bottom: 1.5rem !important;
+    color: #2d2145 !important;
+}
+
+/* Sidebar Estilizada */
+[data-testid="stSidebar"] {
+    background-color: #f4f6fb !important;
+    border-right: 1px solid #eee;
+}
+
+/* Títulos e Textos */
+h1, h2, h3, h4 {
+    color: #1e1b4b !important;
+    font-weight: 800 !important;
+}
+
+/* Botão Estilo PICTA */
+.stButton>button {
+    background: linear-gradient(135deg, #7c4dff 0%, #9e7aff 100%) !important;
+    color: white !important;
+    border-radius: 16px !important;
+    border: none !important;
+    padding: 0.6rem 2rem !important;
     font-weight: 700 !important;
-    font-size: 0.88rem !important;
-    padding: 0.5rem 1rem !important;
+    width: 100%;
+    transition: all 0.3s ease !important;
 }
-[data-testid="stButton"] button:hover {
-    background: var(--peach) !important;
-    border-color: #FFC4A0 !important;
-    color: #8B3A00 !important;
+
+.stButton>button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(124, 77, 255, 0.3) !important;
 }
