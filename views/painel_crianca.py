@@ -94,13 +94,9 @@ def render() -> None:
         st.info("Nenhum pictograma cadastrado ainda.")
         return
 
-    _processar_categoria_query(categorias)
     _processar_pictograma_query(crianca_id, pictos_por_cat)
 
     _render_header(primeiro)
-    categoria = _render_menu(categorias)
-    info = CATEGORIAS[categoria]
-    st.caption(info["hint"])
 
     feedback_slot = st.empty()
     feedback = st.session_state.get("pc_feedback")
@@ -114,7 +110,12 @@ def render() -> None:
     if fala_pendente:
         _falar(fala_pendente)
 
-    _render_grid(pictos_por_cat[categoria])
+    _render_paineis_categoria(categorias, pictos_por_cat)
+    st.markdown(
+        '<iframe class="pc-register-frame" name="pc-register-frame" '
+        'title="Registro de comunicação"></iframe>',
+        unsafe_allow_html=True,
+    )
 
 
 def _render_header(primeiro: str) -> None:
@@ -140,31 +141,43 @@ def _render_header(primeiro: str) -> None:
         )
 
 
-def _render_menu(categorias: list[str]) -> str:
+def _render_paineis_categoria(categorias: list[str], pictos_por_cat: dict) -> None:
     if "pc_categoria" not in st.session_state or st.session_state["pc_categoria"] not in categorias:
         st.session_state["pc_categoria"] = categorias[0]
 
     atual = st.session_state["pc_categoria"]
     links = []
+    paineis = []
     for cat in categorias:
         info = CATEGORIAS[cat]
-        classe = "pc-cat-tab active" if cat == atual else "pc-cat-tab"
-        params = urlencode({"pc_categoria": cat})
+        tab_id = f"pc-tab-{cat}"
+        classe = "pc-cat-tab pc-cat-default" if cat == atual else "pc-cat-tab"
+        painel_classe = "pc-painel pc-default-panel" if cat == atual else "pc-painel"
         links.append(
-            f'<a class="{classe}" href="?{params}" target="_self" aria-label="{html.escape(info["label"])}">'
+            f'<a class="{classe}" href="#{tab_id}" aria-label="{html.escape(info["label"])}">'
             f'  <span class="tab-ico">{html.escape(info["emoji"])}</span>'
             f'  <span>{html.escape(info["label"])}</span>'
             f'</a>'
         )
+        paineis.append(
+            f'<section id="{tab_id}" class="{painel_classe}">'
+            f'  <div class="pc-panel-hint">{html.escape(info["hint"])}</div>'
+            f'  <div class="pc-native-grid">{_render_grid_html(pictos_por_cat[cat])}</div>'
+            f'</section>'
+        )
 
     st.markdown(
-        '<nav class="pc-cat-menu" aria-label="Categorias">' + "".join(links) + "</nav>",
+        '<div class="pc-tabs">'
+        '<nav class="pc-cat-menu" aria-label="Categorias">'
+        + "".join(links)
+        + "</nav>"
+        + "".join(paineis)
+        + "</div>",
         unsafe_allow_html=True,
     )
-    return atual
 
 
-def _render_grid(pictogramas: list[dict]) -> None:
+def _render_grid_html(pictogramas: list[dict]) -> str:
     nonce = str(time.time_ns())
     cards = []
 
@@ -195,27 +208,21 @@ def _render_grid(pictogramas: list[dict]) -> None:
             }
         )
         cards.append(
-            f'<a class="pc-picto-button" href="?{params}" target="_self" '
+            f'<a class="pc-picto-button" href="?{params}" target="pc-register-frame" '
             f'aria-label="{html.escape(nome)}" data-feedback="{feedback_payload}">'
             f'  <span class="pc-picto-emoji">{html.escape(str(picto["emoji"]))}</span>'
             f'  <span class="pc-picto-name">{html.escape(nome)}</span>'
+            f'  <span class="pc-card-feedback" aria-hidden="true">'
+            f'    <span class="pc-feedback-emoji">{html.escape(str(picto["emoji"]))}</span>'
+            f'    <span class="pc-feedback-text">'
+            f'      <b>{html.escape(nome)}</b> registrado.'
+            f'      <small>{html.escape(categoria_label)}</small>'
+            f'    </span>'
+            f'  </span>'
             f'</a>'
         )
 
-    st.markdown(
-        '<div class="pc-native-grid">' + "".join(cards) + "</div>",
-        unsafe_allow_html=True,
-    )
-
-
-def _processar_categoria_query(categorias: list[str]) -> None:
-    categoria = _query_valor("pc_categoria")
-    if not categoria:
-        return
-    if categoria in categorias:
-        st.session_state["pc_categoria"] = categoria
-    _limpar_query_params()
-    st.rerun()
+    return "".join(cards)
 
 
 def _processar_pictograma_query(crianca_id: int, pictos_por_cat: dict) -> None:
