@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -59,17 +60,27 @@ def criar_sessao(usuario_id: int) -> str:
     agora = datetime.utcnow()
     expira = agora + timedelta(days=30)
     executar(
-        "DELETE FROM Sessoes WHERE usuario_id = ? AND expira_em < ?",
-        (usuario_id, agora.isoformat()),
-        commit=True,
-    )
-    executar(
         "INSERT INTO Sessoes(token, usuario_id, expira_em, ultima_atividade) VALUES(?,?,?,?)",
         (token, usuario_id, expira.isoformat(), agora.isoformat()),
         commit=True,
     )
+    _limpar_sessoes_expiradas_assincrono(usuario_id, agora)
     _log.info("Sessao criada: usuario_id=%s", usuario_id)
     return token
+
+
+def _limpar_sessoes_expiradas_assincrono(usuario_id: int, agora: datetime) -> None:
+    def worker() -> None:
+        try:
+            executar(
+                "DELETE FROM Sessoes WHERE usuario_id = ? AND expira_em < ?",
+                (usuario_id, agora.isoformat()),
+                commit=True,
+            )
+        except Exception as exc:
+            _log.warning("Nao foi possivel limpar sessoes expiradas: %s", exc)
+
+    threading.Thread(target=worker, name="picta-limpar-sessoes", daemon=True).start()
 
 
 def validar_sessao(token: str) -> Optional[dict]:

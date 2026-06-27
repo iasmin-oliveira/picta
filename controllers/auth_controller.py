@@ -9,8 +9,9 @@ Padrão de escrita de cookie:
   vai até o final e o JS consegue executar no browser.
 """
 
-from typing import Optional
+import threading
 import time
+from typing import Optional
 import streamlit as st
 import streamlit.components.v1 as components
 from modules.auth import autenticar_usuario, criar_sessao, validar_sessao, renovar_sessao, revogar_sessao
@@ -18,6 +19,16 @@ from modules.auth import autenticar_usuario, criar_sessao, validar_sessao, renov
 COOKIE_NAME    = 'picta_session'
 COOKIE_MAX_AGE = 30 * 60   # 30 minutos em segundos
 SESSION_RENEW_INTERVAL_SECONDS = 60
+
+
+def _executar_sessao_em_background(nome: str, func, *args) -> None:
+    def worker() -> None:
+        try:
+            func(*args)
+        except Exception:
+            pass
+
+    threading.Thread(target=worker, name=nome, daemon=True).start()
 
 
 # ── Leitura/escrita de cookie ─────────────────────────────────────────────────
@@ -86,8 +97,12 @@ def is_authenticated() -> bool:
         agora = time.time()
         ultima_renovacao = st.session_state.get('_ultima_renovacao_sessao', 0)
         if token and (agora - ultima_renovacao) >= SESSION_RENEW_INTERVAL_SECONDS:
-            renovar_sessao(token)
             st.session_state['_ultima_renovacao_sessao'] = agora
+            _executar_sessao_em_background(
+                "picta-renovar-sessao",
+                renovar_sessao,
+                token,
+            )
         return True
 
     # Evita re-verificar o cookie múltiplas vezes no mesmo render cycle
@@ -153,7 +168,11 @@ def logout() -> None:
     """Encerra a sessão, apaga o cookie e limpa o state."""
     token = st.session_state.get('token')
     if token:
-        revogar_sessao(token)
+        _executar_sessao_em_background(
+            "picta-revogar-sessao",
+            revogar_sessao,
+            token,
+        )
     st.session_state.clear()
     st.session_state['_pending_cookie_delete'] = True
     st.session_state['_sessao_verificada'] = True

@@ -35,6 +35,16 @@ CATEGORIAS = {
     },
 }
 CATEGORIA_ORDEM = ["emocao", "acao", "necessidade"]
+CATEGORIA_FEEDBACK = {
+    "emocao": "Sentimento",
+    "acao": "Ação",
+    "necessidade": "Necessidade",
+}
+CATEGORIA_FALA = {
+    "emocao": "Sentimento",
+    "acao": "O que quero fazer",
+    "necessidade": "Necessidade",
+}
 
 
 @st.cache_data(ttl=300)
@@ -106,10 +116,6 @@ def render() -> None:
     else:
         st.session_state.pop("pc_feedback", None)
         st.session_state.pop("pc_feedback_until", None)
-    fala_pendente = st.session_state.pop("pc_falar_pendente", None)
-    if fala_pendente:
-        _falar(fala_pendente)
-
     _render_paineis_categoria(categorias, pictos_por_cat)
     st.markdown(
         '<iframe class="pc-register-frame" name="pc-register-frame" '
@@ -189,12 +195,15 @@ def _render_grid_html(pictogramas: list[dict]) -> str:
             "acao": "Ação",
             "necessidade": "Necessidade",
         }.get(categoria, "Registro")
+        categoria_label = CATEGORIA_FEEDBACK.get(categoria, categoria_label)
+        fala_texto = f'{CATEGORIA_FALA.get(categoria, categoria_label)}: {nome}'
         feedback_payload = html.escape(
             json.dumps(
                 {
                     "emoji": str(picto["emoji"]),
                     "nome": nome,
                     "categoria": categoria_label,
+                    "fala": fala_texto,
                 },
                 ensure_ascii=False,
             ),
@@ -260,7 +269,6 @@ def _processar_pictograma_query(crianca_id: int, pictos_por_cat: dict) -> None:
     }
     st.session_state["pc_feedback"] = feedback
     st.session_state["pc_feedback_until"] = time.time() + 4
-    st.session_state["pc_falar_pendente"] = feedback["nome"]
     if feedback["categoria"] in CATEGORIAS:
         st.session_state["pc_categoria"] = feedback["categoria"]
 
@@ -293,6 +301,7 @@ def _mostrar_feedback(slot, emoji: str, nome: str, categoria: str) -> None:
         "acao": "Ação",
         "necessidade": "Necessidade",
     }.get(categoria, "Registro")
+    categoria_label = CATEGORIA_FEEDBACK.get(categoria, categoria_label)
     slot.markdown(
         f'<div class="pc-feedback-top">'
         f'  <span class="pc-feedback-emoji">{html.escape(str(emoji))}</span>'
@@ -380,7 +389,8 @@ def _instalar_feedback_cliente() -> None:
               void el.offsetWidth;
               el.style.animation = "";
 
-              const falaTexto = data.nome || "";
+              const fallbackFala = [data.categoria, data.nome].filter(Boolean).join(": ");
+              const falaTexto = data.fala || fallbackFala;
               const synth = w.speechSynthesis || window.speechSynthesis;
               if (falaTexto && synth) {
                 const ultimo = w.__pictaLastSpoken || {};
@@ -478,6 +488,7 @@ def _instalar_fala_cliente() -> None:
             doc.addEventListener("click", (evento) => {
               const alvo = evento.target.closest("button, .pc-picto-button");
               if (!alvo) return;
+              if (alvo.matches(".pc-picto-button")) return;
               const texto = limparTexto(alvo.innerText || alvo.textContent);
               if (texto && texto.toLowerCase() !== "sair") falar(texto);
             }, true);

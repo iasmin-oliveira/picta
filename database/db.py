@@ -22,6 +22,7 @@ _log = get_logger(__name__)
 CREATE_TEST_USER = os.getenv("CREATE_TEST_USER", "false").lower() == "true"
 SQLITE_PATH = Path(__file__).resolve().parent.parent / "picta.db"
 _INITIALIZED = False
+_INIT_LOCK = threading.Lock()
 _PG_POOL = None
 _PG_POOL_LOCK = threading.Lock()
 
@@ -260,17 +261,14 @@ def _inicializar_pg() -> None:
         if CREATE_TEST_USER:
             _seed_demo_pg(cur)
 
-        for nome, categoria, emoji in PICTOGRAMAS_SEED:
-            cur.execute(
-                """
-                INSERT INTO Pictogramas(nome, categoria, emoji)
-                SELECT %s, %s, %s
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM Pictogramas WHERE nome = %s
-                )
-                """,
-                (nome, categoria, emoji, nome),
-            )
+        cur.executemany(
+            """
+            INSERT INTO Pictogramas(nome, categoria, emoji)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (nome) DO NOTHING
+            """,
+            PICTOGRAMAS_SEED,
+        )
 
         conn.commit()
         cur.close()
@@ -393,13 +391,10 @@ def _inicializar_sqlite() -> None:
         if CREATE_TEST_USER:
             _seed_demo_sqlite(cur)
 
-        for nome, categoria, emoji in PICTOGRAMAS_SEED:
-            cur.execute("SELECT id FROM Pictogramas WHERE nome = ?", (nome,))
-            if not cur.fetchone():
-                cur.execute(
-                    "INSERT INTO Pictogramas(nome, categoria, emoji) VALUES(?,?,?)",
-                    (nome, categoria, emoji),
-                )
+        cur.executemany(
+            "INSERT OR IGNORE INTO Pictogramas(nome, categoria, emoji) VALUES(?,?,?)",
+            PICTOGRAMAS_SEED,
+        )
 
         conn.commit()
     finally:
@@ -478,11 +473,14 @@ def inicializar_db() -> None:
     global _INITIALIZED
     if _INITIALIZED:
         return
-    if _usar_postgres():
-        _inicializar_pg()
-    else:
-        _inicializar_sqlite()
-    _INITIALIZED = True
+    with _INIT_LOCK:
+        if _INITIALIZED:
+            return
+        if _usar_postgres():
+            _inicializar_pg()
+        else:
+            _inicializar_sqlite()
+        _INITIALIZED = True
 
 
 def _ensure_initialized() -> None:
