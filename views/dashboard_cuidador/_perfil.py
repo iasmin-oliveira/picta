@@ -5,7 +5,12 @@ Seção "Meu Perfil" do dashboard do cuidador.
 
 import streamlit as st
 
-from modules.auth import obter_usuario_por_id, atualizar_usuario
+from modules.auth import (
+    atualizar_senha_crianca_responsavel,
+    atualizar_usuario,
+    obter_criancas_do_usuario,
+    obter_usuario_por_id,
+)
 
 
 def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
@@ -21,7 +26,9 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
     usuario_db     = obter_usuario_por_id(usuario_id)
     nome_atual     = usuario_db.get('nome', nome)   if usuario_db else nome
     username_atual = usuario_db.get('username', '') if usuario_db else ''
+    email_atual    = usuario_db.get('email', '')    if usuario_db else ''
     iniciais       = ''.join(p[0].upper() for p in nome.split()[:2])
+    perfil         = st.session_state.get('usuario', {}).get('perfil', 'responsavel')
 
     col_card, col_form = st.columns([1, 1])
 
@@ -61,6 +68,7 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
             novo_nome     = st.text_input("Nome completo", value=nome_atual)
             novo_username = st.text_input("Nome de usuário", value=username_atual,
                                           help="Letras, números e ponto. Ex: maria.silva")
+            novo_email = st.text_input("Email de recuperacao", value=email_atual or "")
             st.markdown(
                 '<div style="margin-top:.4rem;font-size:.78rem;color:#9ca3af;'
                 'font-weight:600">🔑 Alterar senha — deixe em branco para manter a atual</div>',
@@ -75,11 +83,46 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
                 if nova_senha and nova_senha != conf_senha:
                     st.error("❌ As senhas não coincidem.")
                 else:
-                    erro = atualizar_usuario(usuario_id, novo_nome, novo_username,
-                                             nova_senha if nova_senha else "")
+                    erro = atualizar_usuario(
+                        usuario_id,
+                        novo_nome,
+                        novo_username,
+                        nova_senha if nova_senha else "",
+                        email=novo_email,
+                    )
                     if erro:
                         st.error(f"❌ {erro}")
                     else:
                         st.session_state['usuario']['nome'] = novo_nome
                         st.success("✅ Perfil atualizado com sucesso!")
                         st.rerun()
+
+    criancas = obter_criancas_do_usuario(usuario_id, perfil)
+    if criancas:
+        st.markdown(
+            '<div class="sec-header" style="margin-top:1rem">'
+            'Senha da crianca</div>',
+            unsafe_allow_html=True,
+        )
+        with st.form("form_senha_crianca"):
+            opcoes = {f"{c['nome']}": c['id'] for c in criancas}
+            crianca_nome = st.selectbox("Crianca", list(opcoes.keys()))
+            senha_crianca = st.text_input(
+                "Nova senha da crianca",
+                type="password",
+                placeholder="Minimo 6 caracteres",
+            )
+            conf_crianca = st.text_input("Confirmar senha da crianca", type="password")
+            if st.form_submit_button("Atualizar senha da crianca", use_container_width=True):
+                if senha_crianca != conf_crianca:
+                    st.error("As senhas nao coincidem.")
+                else:
+                    erro = atualizar_senha_crianca_responsavel(
+                        usuario_id,
+                        opcoes[crianca_nome],
+                        senha_crianca,
+                    )
+                    if erro:
+                        st.error(erro)
+                    else:
+                        st.success("Senha da crianca atualizada.")

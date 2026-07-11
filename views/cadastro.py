@@ -47,6 +47,11 @@ def render() -> None:
                 label_visibility="collapsed",
             )
             st.caption(PERFIS[perfil][1])
+            email = st.text_input(
+                "Email de recuperacao",
+                placeholder="voce@email.com",
+                help="Obrigatorio para responsavel e profissional recuperarem a senha.",
+            )
 
             # Campo de vínculo contextual
             username_vinculo = ""
@@ -71,7 +76,7 @@ def render() -> None:
             if senha != confirmar:
                 st.error("❌  As senhas não coincidem.")
             else:
-                erro = criar_usuario(nome, username, senha, perfil)
+                erro = criar_usuario(nome, username, senha, perfil, email=email)
                 if erro:
                     st.error("❌  " + erro)
                 else:

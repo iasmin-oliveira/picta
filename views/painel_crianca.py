@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import html
 import json
-import threading
 import time
 from urllib.parse import urlencode
 
 import streamlit as st
 import streamlit.components.v1 as components
 
-from database.db import executar
+from database.db import executar, garantir_pictogramas_seed
 from modules.auth import obter_ou_criar_crianca
 from modules.logs import registar_interacao
 from utils.css_loader import inject_css
@@ -47,8 +46,8 @@ CATEGORIA_FALA = {
 }
 
 
-@st.cache_data(ttl=300)
 def _obter_pictogramas() -> dict:
+    garantir_pictogramas_seed()
     rows = executar(
         "SELECT MIN(id) AS id, nome, categoria, MAX(emoji) AS emoji "
         "FROM Pictogramas "
@@ -85,11 +84,14 @@ def render() -> None:
         logout()
 
     crianca_cache_key = f"pc_crianca_id_{usuario_id}"
-    crianca_id = st.session_state.get(crianca_cache_key)
+    crianca_id = st.session_state.get(crianca_cache_key) or usuario.get("crianca_id")
     if not crianca_id:
         crianca_id = obter_ou_criar_crianca(usuario_id, nome)
         if crianca_id:
             st.session_state[crianca_cache_key] = crianca_id
+            st.session_state.setdefault("usuario", {})["crianca_id"] = crianca_id
+    elif crianca_cache_key not in st.session_state:
+        st.session_state[crianca_cache_key] = crianca_id
     if not crianca_id:
         st.error("Não foi possível carregar o painel da criança.")
         st.stop()
@@ -126,6 +128,20 @@ def render() -> None:
 
 def _render_header(primeiro: str) -> None:
     primeiro_html = html.escape(primeiro)
+    st.markdown(
+        f'<div class="pc-header">'
+        f'  <div class="pc-header-copy">'
+        f'    <div class="pc-saudacao">Ol&aacute;, {primeiro_html}!</div>'
+        f'    <div class="pc-sub">Como voc&ecirc; est&aacute; se sentindo agora?</div>'
+        f'  </div>'
+        f'  <div class="pc-header-actions">'
+        f'    <div class="pc-header-icon">&#127752;</div>'
+        f'    <a class="pc-logout-link" href="?pc_logout=1" target="_self">Sair</a>'
+        f'  </div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    return
     col_info, col_sair = st.columns([5, 1])
 
     with col_info:
@@ -212,6 +228,7 @@ def _render_grid_html(pictogramas: list[dict]) -> str:
         params = urlencode(
             {
                 "pc_picto": str(picto["id"]),
+                "pc_nome": str(picto["nome"]),
                 "pc_cat": categoria,
                 "pc_nonce": nonce,
             }
@@ -255,11 +272,18 @@ def _processar_pictograma_query(crianca_id: int, pictos_por_cat: dict) -> None:
 
     picto = _buscar_pictograma(pictos_por_cat, picto_id)
     if not picto:
+        picto = _buscar_pictograma_por_nome(
+            pictos_por_cat,
+            _query_valor("pc_nome"),
+            _query_valor("pc_cat"),
+        )
+    if not picto:
         _limpar_query_params()
         st.rerun()
         return
 
-    _registrar_interacao_assincrona(crianca_id, picto_id)
+    picto_id = int(picto["id"])
+    _registrar_interacao(crianca_id, picto_id)
     st.session_state["_pc_ultimo_registro_query"] = chave
 
     feedback = {
@@ -284,15 +308,28 @@ def _buscar_pictograma(pictos_por_cat: dict, picto_id: int) -> dict | None:
     return None
 
 
-def _registrar_interacao_assincrona(crianca_id: int, pictograma_id: int) -> None:
-    def worker() -> None:
-        try:
-            ok = registar_interacao(crianca_id=crianca_id, pictograma_id=pictograma_id)
-            log_debug(f"pictograma={pictograma_id} registrado={ok}")
-        except Exception as exc:
-            log_debug(f"erro_registro_pictograma={pictograma_id}: {exc}")
+def _buscar_pictograma_por_nome(
+    pictos_por_cat: dict,
+    nome: str,
+    categoria: str,
+) -> dict | None:
+    nome_normalizado = (nome or "").strip().upper()
+    categoria = (categoria or "").strip()
+    if not nome_normalizado:
+        return None
+    candidatos = pictos_por_cat.get(categoria, []) if categoria else []
+    if not candidatos:
+        candidatos = [picto for pictos in pictos_por_cat.values() for picto in pictos]
+    for picto in candidatos:
+        if str(picto.get("nome", "")).strip().upper() == nome_normalizado:
+            return picto
+    return None
 
-    threading.Thread(target=worker, name="picta-registro-interacao", daemon=True).start()
+
+def _registrar_interacao(crianca_id: int, pictograma_id: int) -> bool:
+    ok = registar_interacao(crianca_id=crianca_id, pictograma_id=pictograma_id)
+    log_debug(f"pictograma={pictograma_id} registrado={ok}")
+    return ok
 
 
 def _mostrar_feedback(slot, emoji: str, nome: str, categoria: str) -> None:

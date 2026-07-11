@@ -5,9 +5,12 @@ from __future__ import annotations
 import threading
 import uuid
 from datetime import datetime, timedelta
+from secrets import choice
+from string import ascii_letters, digits
 from typing import List, Optional
 
 from database.db import executar, hash_senha
+from modules.emailer import enviar_senha_temporaria, email_configurado
 from utils.logger import get_logger
 
 _log = get_logger(__name__)
@@ -21,8 +24,12 @@ def autenticar_usuario(username: str, senha: str) -> Optional[dict]:
         return None
 
     result = executar(
-        "SELECT id, nome, perfil, username FROM Utilizadores "
-        "WHERE username = ? AND senha_hash = ?",
+        "SELECT u.id, u.nome, u.perfil, u.username, u.email, "
+        "u.deve_trocar_senha, c.id AS crianca_id "
+        "FROM Utilizadores u "
+        "LEFT JOIN Criancas c ON c.utilizador_id = u.id "
+        "WHERE u.username = ? AND u.senha_hash = ? "
+        "ORDER BY c.id ASC LIMIT 1",
         (username, hash_senha(senha)),
         fetchone=True,
     )
@@ -33,11 +40,22 @@ def autenticar_usuario(username: str, senha: str) -> Optional[dict]:
     return result
 
 
-def criar_usuario(nome: str, username: str, senha: str, perfil: str) -> Optional[str]:
+def criar_usuario(
+    nome: str,
+    username: str,
+    senha: str,
+    perfil: str,
+    email: str = "",
+) -> Optional[str]:
     username = username.strip().lower()
     nome = nome.strip()
+    email = email.strip().lower()
     if not nome or not username or not senha:
         return "Preencha todos os campos."
+    if perfil in {"responsavel", "cuidador", "profissional"} and not email:
+        return "Informe um email para recuperacao de senha."
+    if email and "@" not in email:
+        return "Informe um email valido."
     if len(senha) < 6:
         return "A senha deve ter pelo menos 6 caracteres."
     if perfil not in {"crianca", "responsavel", "cuidador", "profissional"}:
@@ -47,8 +65,8 @@ def criar_usuario(nome: str, username: str, senha: str, perfil: str) -> Optional
         return "Este nome de utilizador ja esta em uso."
 
     executar(
-        "INSERT INTO Utilizadores(nome, perfil, username, senha_hash) VALUES(?,?,?,?)",
-        (nome, perfil, username, hash_senha(senha)),
+        "INSERT INTO Utilizadores(nome, perfil, username, email, senha_hash) VALUES(?,?,?,?,?)",
+        (nome, perfil, username, email or None, hash_senha(senha)),
         commit=True,
     )
     _log.info("Novo utilizador criado: username=%s perfil=%s", username, perfil)
@@ -89,9 +107,12 @@ def validar_sessao(token: str) -> Optional[dict]:
 
     agora = datetime.utcnow()
     row = executar(
-        "SELECT u.id, u.nome, u.perfil, u.username, s.ultima_atividade "
+        "SELECT u.id, u.nome, u.perfil, u.username, u.email, "
+        "u.deve_trocar_senha, c.id AS crianca_id, s.ultima_atividade "
         "FROM Sessoes s JOIN Utilizadores u ON u.id = s.usuario_id "
-        "WHERE s.token = ? AND s.expira_em > ?",
+        "LEFT JOIN Criancas c ON c.utilizador_id = u.id "
+        "WHERE s.token = ? AND s.expira_em > ? "
+        "ORDER BY c.id ASC LIMIT 1",
         (token, agora.isoformat()),
         fetchone=True,
     )
@@ -361,7 +382,7 @@ def obter_usuario_por_id(usuario_id: int) -> Optional[dict]:
     if not usuario_id:
         return None
     return executar(
-        "SELECT id, nome, username, perfil FROM Utilizadores WHERE id = ?",
+        "SELECT id, nome, username, email, perfil FROM Utilizadores WHERE id = ?",
         (usuario_id,),
         fetchone=True,
     )
@@ -372,14 +393,18 @@ def atualizar_usuario(
     nome: str,
     username: str,
     nova_senha: str = "",
+    email: Optional[str] = None,
 ) -> Optional[str]:
     if not usuario_id:
         return "Sessao invalida. Faca login novamente."
 
     nome = nome.strip()
     username = username.strip().lower()
+    email_limpo = email.strip().lower() if email is not None else None
     if not nome or not username:
         return "Nome e nome de utilizador sao obrigatorios."
+    if email_limpo is not None and email_limpo and "@" not in email_limpo:
+        return "Informe um email valido."
 
     existe = executar(
         "SELECT id FROM Utilizadores WHERE username = ? AND id != ?",
@@ -389,21 +414,100 @@ def atualizar_usuario(
     if existe:
         return "Este nome de utilizador ja esta em uso por outra conta."
 
+    campos = ["nome = ?", "username = ?"]
+    params: list = [nome, username]
+    if email_limpo is not None:
+        campos.append("email = ?")
+        params.append(email_limpo or None)
     if nova_senha:
         if len(nova_senha) < 6:
             return "A nova senha deve ter pelo menos 6 caracteres."
-        executar(
-            "UPDATE Utilizadores SET nome = ?, username = ?, senha_hash = ? WHERE id = ?",
-            (nome, username, hash_senha(nova_senha), usuario_id),
-            commit=True,
-        )
-    else:
-        executar(
-            "UPDATE Utilizadores SET nome = ?, username = ? WHERE id = ?",
-            (nome, username, usuario_id),
-            commit=True,
-        )
+        campos.append("senha_hash = ?")
+        campos.append("deve_trocar_senha = ?")
+        params.extend([hash_senha(nova_senha), False])
+    params.append(usuario_id)
+    executar(
+        f"UPDATE Utilizadores SET {', '.join(campos)} WHERE id = ?",
+        tuple(params),
+        commit=True,
+    )
     return None
+
+
+def solicitar_recuperacao_senha(email: str) -> Optional[str]:
+    email = email.strip().lower()
+    if not email or "@" not in email:
+        return "Informe um email valido."
+    if not email_configurado():
+        return "Envio de email ainda nao configurado para este ambiente."
+
+    usuarios = executar(
+        "SELECT id, nome, email FROM Utilizadores "
+        "WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) "
+        "AND perfil IN ('responsavel', 'cuidador', 'profissional') "
+        "LIMIT 2",
+        (email,),
+        fetchall=True,
+    ) or []
+    if len(usuarios) != 1:
+        return None
+
+    usuario = usuarios[0]
+    senha_temporaria = _gerar_senha_temporaria()
+    erro_envio = enviar_senha_temporaria(
+        usuario["email"],
+        usuario["nome"],
+        senha_temporaria,
+    )
+    if erro_envio:
+        return erro_envio
+
+    executar(
+        "UPDATE Utilizadores SET senha_hash = ?, deve_trocar_senha = ? WHERE id = ?",
+        (hash_senha(senha_temporaria), True, usuario["id"]),
+        commit=True,
+    )
+    return None
+
+
+def trocar_senha_obrigatoria(usuario_id: int, nova_senha: str) -> Optional[str]:
+    if not usuario_id:
+        return "Sessao invalida. Faca login novamente."
+    if len(nova_senha or "") < 6:
+        return "A nova senha deve ter pelo menos 6 caracteres."
+    executar(
+        "UPDATE Utilizadores SET senha_hash = ?, deve_trocar_senha = ? WHERE id = ?",
+        (hash_senha(nova_senha), False, usuario_id),
+        commit=True,
+    )
+    return None
+
+
+def atualizar_senha_crianca_responsavel(
+    responsavel_id: int,
+    crianca_id: int,
+    nova_senha: str,
+) -> Optional[str]:
+    if len(nova_senha or "") < 6:
+        return "A nova senha deve ter pelo menos 6 caracteres."
+    row = executar(
+        "SELECT utilizador_id FROM Criancas WHERE id = ? AND cuidador_id = ?",
+        (crianca_id, responsavel_id),
+        fetchone=True,
+    )
+    if not row or not row.get("utilizador_id"):
+        return "Crianca nao encontrada ou sem conta vinculada."
+    executar(
+        "UPDATE Utilizadores SET senha_hash = ?, deve_trocar_senha = ? WHERE id = ?",
+        (hash_senha(nova_senha), False, row["utilizador_id"]),
+        commit=True,
+    )
+    return None
+
+
+def _gerar_senha_temporaria(tamanho: int = 10) -> str:
+    alfabeto = ascii_letters + digits
+    return "".join(choice(alfabeto) for _ in range(tamanho))
 
 
 def atualizar_crianca(crianca_id: int, nome: str, data_nascimento: str = "") -> Optional[str]:

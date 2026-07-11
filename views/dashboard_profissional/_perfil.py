@@ -21,6 +21,7 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
     usuario_db     = obter_usuario_por_id(usuario_id)
     nome_atual     = usuario_db.get('nome', nome)   if usuario_db else nome
     username_atual = usuario_db.get('username', '') if usuario_db else ''
+    email_atual    = usuario_db.get('email', '')    if usuario_db else ''
 
     col_card, col_form = st.columns([1, 1])
 
@@ -66,6 +67,7 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
                 help="Letras, números e ponto. Ex: dra.marina",
             )
             st.caption("🔑 Alterar senha — deixe em branco para manter a atual")
+            novo_email = st.text_input("Email de recuperacao", value=email_atual or "")
             nova_senha = st.text_input("Nova senha", type="password",
                                        placeholder="Mínimo 6 caracteres")
             conf_senha = st.text_input("Confirmar nova senha", type="password")
@@ -78,6 +80,7 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
                     erro = atualizar_usuario(
                         usuario_id, novo_nome, novo_username,
                         nova_senha if nova_senha else "",
+                        email=novo_email,
                     )
                     if erro:
                         st.error(f"❌ {erro}")

@@ -1785,3 +1785,35 @@ button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"]::befo
 .page-subtitle {
   overflow-wrap: anywhere;
 }
+
+/* Mobile: o botao nativo da sidebar nao deve cobrir o cabecalho. */
+@media (max-width: 900px) {
+  .page-header {
+    padding-left: 3rem !important;
+    margin-bottom: 1rem !important;
+  }
+  [data-testid="stMainBlockContainer"] {
+    padding-top: .75rem !important;
+  }
+  [data-testid="stExpandSidebarButton"],
+  [data-testid="stSidebarCollapsedControl"],
+  [data-testid="collapsedControl"],
+  [aria-label="Open sidebar"] {
+    top: .55rem !important;
+    left: .65rem !important;
+    right: auto !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-header {
+    padding-left: 2.85rem !important;
+  }
+  .page-title {
+    font-size: 1.22rem !important;
+  }
+  .page-subtitle {
+    font-size: .82rem !important;
+    line-height: 1.35 !important;
+  }
+}

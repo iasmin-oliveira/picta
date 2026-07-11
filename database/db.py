@@ -139,7 +139,9 @@ def _inicializar_pg() -> None:
                 nome       TEXT NOT NULL,
                 perfil     TEXT NOT NULL,
                 username   TEXT UNIQUE NOT NULL,
+                email      TEXT,
                 senha_hash TEXT NOT NULL,
+                deve_trocar_senha BOOLEAN DEFAULT FALSE,
                 criado_em  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS Criancas (
@@ -181,6 +183,8 @@ def _inicializar_pg() -> None:
 
         for sql in (
             "ALTER TABLE Criancas ALTER COLUMN cuidador_id DROP NOT NULL;",
+            "ALTER TABLE Utilizadores ADD COLUMN IF NOT EXISTS email TEXT;",
+            "ALTER TABLE Utilizadores ADD COLUMN IF NOT EXISTS deve_trocar_senha BOOLEAN DEFAULT FALSE;",
             "ALTER TABLE Criancas ADD COLUMN IF NOT EXISTS utilizador_id INTEGER REFERENCES Utilizadores(id);",
             "ALTER TABLE Sessoes ADD COLUMN IF NOT EXISTS ultima_atividade TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
             """
@@ -255,6 +259,8 @@ def _inicializar_pg() -> None:
                 ON Vinculos(usuario_id);
             CREATE INDEX IF NOT EXISTS idx_sessoes_usuario
                 ON Sessoes(usuario_id);
+            CREATE INDEX IF NOT EXISTS idx_utilizadores_email
+                ON Utilizadores(LOWER(email));
             """
         )
 
@@ -307,7 +313,9 @@ def _inicializar_sqlite() -> None:
                 nome       TEXT NOT NULL,
                 perfil     TEXT NOT NULL,
                 username   TEXT UNIQUE NOT NULL,
+                email      TEXT,
                 senha_hash TEXT NOT NULL,
+                deve_trocar_senha INTEGER DEFAULT 0,
                 criado_em  DATETIME DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS Criancas (
@@ -385,6 +393,8 @@ def _inicializar_sqlite() -> None:
                 ON Vinculos(usuario_id);
             CREATE INDEX IF NOT EXISTS idx_sessoes_usuario
                 ON Sessoes(usuario_id);
+            CREATE INDEX IF NOT EXISTS idx_utilizadores_email
+                ON Utilizadores(LOWER(email));
             """
         )
 
@@ -426,6 +436,8 @@ def _migrar_sqlite(cur: sqlite3.Cursor) -> None:
         )
 
     for tabela, coluna, definicao in (
+        ("Utilizadores", "email", "TEXT"),
+        ("Utilizadores", "deve_trocar_senha", "INTEGER DEFAULT 0"),
         ("Criancas", "utilizador_id", "INTEGER REFERENCES Utilizadores(id)"),
         ("Sessoes", "ultima_atividade", "DATETIME DEFAULT CURRENT_TIMESTAMP"),
     ):
@@ -486,6 +498,63 @@ def inicializar_db() -> None:
 def _ensure_initialized() -> None:
     if not _INITIALIZED:
         inicializar_db()
+
+
+def garantir_pictogramas_seed() -> None:
+    """Garante que os pictogramas base existam mesmo apos limpeza manual do banco."""
+    _ensure_initialized()
+    nomes_seed = tuple(item[0] for item in PICTOGRAMAS_SEED)
+    placeholders = ",".join("?" for _ in nomes_seed)
+    total = executar(
+        f"SELECT COUNT(DISTINCT nome) AS total FROM Pictogramas WHERE nome IN ({placeholders})",
+        nomes_seed,
+        fetchone=True,
+    )
+    if int((total or {}).get("total") or 0) >= len(PICTOGRAMAS_SEED):
+        return
+
+    if _usar_postgres():
+        conn = _get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.executemany(
+                """
+                INSERT INTO Pictogramas(nome, categoria, emoji)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (nome) DO UPDATE
+                SET categoria = EXCLUDED.categoria,
+                    emoji = EXCLUDED.emoji
+                """,
+                PICTOGRAMAS_SEED,
+            )
+            conn.commit()
+            cur.close()
+            return
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            _release_pg_conn(conn)
+
+    conn = _get_sqlite_conn()
+    try:
+        cur = conn.cursor()
+        cur.executemany(
+            """
+            INSERT INTO Pictogramas(nome, categoria, emoji)
+            VALUES(?,?,?)
+            ON CONFLICT(nome) DO UPDATE SET
+                categoria = excluded.categoria,
+                emoji = excluded.emoji
+            """,
+            PICTOGRAMAS_SEED,
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def executar(

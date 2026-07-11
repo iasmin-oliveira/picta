@@ -14,7 +14,15 @@ import time
 from typing import Optional
 import streamlit as st
 import streamlit.components.v1 as components
-from modules.auth import autenticar_usuario, criar_sessao, validar_sessao, renovar_sessao, revogar_sessao
+from modules.auth import (
+    autenticar_usuario,
+    criar_sessao,
+    renovar_sessao,
+    revogar_sessao,
+    solicitar_recuperacao_senha,
+    trocar_senha_obrigatoria,
+    validar_sessao,
+)
 
 COOKIE_NAME    = 'picta_session'
 COOKIE_MAX_AGE = 30 * 60   # 30 minutos em segundos
@@ -137,7 +145,25 @@ def login() -> None:
         return
 
     from views.login import render_login_form
-    username, senha, submitted, feedback = render_login_form()
+    (
+        username,
+        senha,
+        submitted,
+        feedback,
+        reset_email,
+        reset_submitted,
+        reset_feedback,
+    ) = render_login_form()
+
+    if reset_submitted:
+        erro_reset = solicitar_recuperacao_senha(reset_email)
+        if erro_reset:
+            reset_feedback.error("❌ " + erro_reset)
+        else:
+            reset_feedback.success(
+                "Se o email estiver cadastrado, enviaremos uma senha temporaria."
+            )
+        return
 
     if not submitted:
         return
@@ -161,6 +187,41 @@ def login() -> None:
         '_pending_cookie':   token,
         '_ultima_renovacao_sessao': time.time(),
     })
+    st.rerun()
+
+
+def render_troca_senha_obrigatoria() -> None:
+    from utils.css_loader import inject_css
+
+    inject_css('picta_design.css')
+    usuario = st.session_state.get('usuario', {})
+    st.markdown(
+        '<div style="max-width:520px;margin:2rem auto;">'
+        '<div class="glass-card" style="padding:1.4rem 1.5rem;">'
+        '<div class="sec-header">🔐 Troque sua senha</div>'
+        '<div style="font-size:.9rem;color:#4b5563;font-weight:600;line-height:1.5">'
+        'Voce entrou com uma senha temporaria. Crie uma nova senha para continuar.'
+        '</div>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    with st.form("form_troca_senha_obrigatoria"):
+        nova = st.text_input("Nova senha", type="password", placeholder="Minimo 6 caracteres")
+        confirmar = st.text_input("Confirmar nova senha", type="password")
+        submitted = st.form_submit_button("Salvar nova senha", use_container_width=True)
+
+    if not submitted:
+        return
+    if nova != confirmar:
+        st.error("As senhas nao coincidem.")
+        return
+    erro = trocar_senha_obrigatoria(usuario.get('id'), nova)
+    if erro:
+        st.error("❌ " + erro)
+        return
+    st.session_state['usuario']['deve_trocar_senha'] = False
+    st.success("Senha alterada com sucesso.")
     st.rerun()
 
 

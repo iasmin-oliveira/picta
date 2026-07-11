@@ -6,7 +6,7 @@ import datetime
 from typing import List, Optional
 from zoneinfo import ZoneInfo
 
-from database.db import executar
+from database.db import executar, garantir_pictogramas_seed
 from utils.debug_logger import log_debug
 
 APP_TZ = ZoneInfo("America/Sao_Paulo")
@@ -16,14 +16,23 @@ def registar_interacao(crianca_id: int, pictograma_id: int) -> bool:
     if not crianca_id or not pictograma_id:
         return False
     try:
+        garantir_pictogramas_seed()
+        if not executar("SELECT id FROM Criancas WHERE id = ?", (crianca_id,), fetchone=True):
+            log_debug(f"registro_ignorado_crianca_inexistente={crianca_id}")
+            return False
+        if not executar("SELECT id FROM Pictogramas WHERE id = ?", (pictograma_id,), fetchone=True):
+            log_debug(f"registro_ignorado_pictograma_inexistente={pictograma_id}")
+            return False
         executar(
             "INSERT INTO Registos_Interacao(crianca_id, pictograma_id) VALUES(?,?)",
             (crianca_id, pictograma_id),
             commit=True,
         )
+        log_debug(f"registro_interacao_ok crianca={crianca_id} pictograma={pictograma_id}")
         return True
     except Exception as exc:
         print("[PICTA] Erro ao registrar interação:", exc)
+        log_debug(f"erro_registrar_interacao crianca={crianca_id} pictograma={pictograma_id}: {exc}")
         return False
 
 

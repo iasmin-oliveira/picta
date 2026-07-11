@@ -42,6 +42,20 @@ def render_login_form():
             senha     = st.text_input("🔒  Senha", type="password", placeholder="Digite sua senha")
             submitted = st.form_submit_button("✨  Entrar no PICTA", use_container_width=True)
 
+        reset_email = ""
+        reset_submitted = False
+        with st.expander("Esqueci minha senha"):
+            with st.form("form_recuperar_senha", clear_on_submit=True):
+                reset_email = st.text_input(
+                    "Email cadastrado",
+                    placeholder="voce@email.com",
+                    key="reset_email",
+                )
+                reset_submitted = st.form_submit_button(
+                    "Enviar senha temporaria",
+                    use_container_width=True,
+                )
+
         st.markdown("<br>", unsafe_allow_html=True)
         col_txt, col_btn = st.columns([2, 1])
         with col_txt:
@@ -61,4 +75,4 @@ def render_login_form():
         </p>
         """, unsafe_allow_html=True)
 
-    return username, senha, submitted, feedback
+    return username, senha, submitted, feedback, reset_email, reset_submitted, feedback

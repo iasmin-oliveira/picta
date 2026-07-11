@@ -4,7 +4,12 @@ Roteador principal baseado no perfil autenticado.
 """
 
 import streamlit as st
-from controllers.auth_controller import is_authenticated, login, logout
+from controllers.auth_controller import (
+    is_authenticated,
+    login,
+    logout,
+    render_troca_senha_obrigatoria,
+)
 
 PERFIS_CUIDADOR      = ('responsavel', 'cuidador')
 PERFIS_PROFISSIONAL  = ('profissional',)
@@ -16,6 +21,9 @@ def route_app() -> None:
         return
 
     perfil = st.session_state.get('usuario', {}).get('perfil', '')
+    if st.session_state.get('usuario', {}).get('deve_trocar_senha'):
+        render_troca_senha_obrigatoria()
+        return
 
     if perfil == 'crianca':
         from views.painel_crianca import render as render_crianca
