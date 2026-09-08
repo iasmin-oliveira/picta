@@ -1,23 +1,6 @@
 import hashlib
 import sqlite3
 from datetime import datetime, timedelta
-from unittest.mock import patch
-
-import pytest
-
-
-def make_db():
-    con = sqlite3.connect(":memory:")
-    con.row_factory = sqlite3.Row
-    con.executescript("""
-    CREATE TABLE Utilizadores (id INTEGER PRIMARY KEY, nome TEXT, perfil TEXT, username TEXT UNIQUE, email TEXT, senha_hash TEXT, deve_trocar_senha INTEGER DEFAULT 0);
-    CREATE TABLE Criancas (id INTEGER PRIMARY KEY, nome TEXT, cuidador_id INTEGER, utilizador_id INTEGER, data_nascimento TEXT);
-    CREATE TABLE Pictogramas (id INTEGER PRIMARY KEY, nome TEXT, categoria TEXT, emoji TEXT);
-    CREATE TABLE Registos_Interacao (id INTEGER PRIMARY KEY, crianca_id INTEGER, pictograma_id INTEGER, registado_em TEXT);
-    CREATE TABLE Vinculos (id INTEGER PRIMARY KEY, usuario_id INTEGER, crianca_id INTEGER);
-    CREATE TABLE Sessoes (token TEXT PRIMARY KEY, usuario_id INTEGER, expira_em TEXT, ultima_atividade TEXT);
-    """)
-    return con
 
 
 def test_password_hash_is_salted_and_verifies():
@@ -31,18 +14,18 @@ def test_password_hash_is_salted_and_verifies():
 def test_legacy_sha256_migrates_on_login(monkeypatch):
     from modules import auth
     legacy = hashlib.sha256(b"senha123").hexdigest()
-    rows = [{"id": 7, "nome": "Crianca A", "perfil": "crianca", "username": "a", "email": None, "senha_hash": legacy, "deve_trocar_senha": 0, "crianca_id": 10}]
+    row = {"id": 7, "nome": "Crianca A", "perfil": "crianca", "username": "a", "email": None, "senha_hash": legacy, "deve_trocar_senha": 0, "crianca_id": 10}
     calls = []
     def fake_exec(sql, params=(), **kwargs):
         calls.append((sql, params, kwargs))
         if sql.startswith("SELECT u.id"):
-            return dict(rows[0])
+            return dict(row)
         return None
     monkeypatch.setattr(auth, "executar", fake_exec)
     user = auth.autenticar_usuario("A", "senha123")
     assert user["id"] == 7
     assert any("UPDATE Utilizadores SET senha_hash" in c[0] for c in calls)
-    assert user.get("senha_hash") is None
+    assert "senha_hash" not in user
 
 
 def test_child_creation_never_reuses_same_name(monkeypatch):
@@ -54,7 +37,6 @@ def test_child_creation_never_reuses_same_name(monkeypatch):
         if sql.startswith("INSERT INTO Criancas"):
             state["owned"] = {"id": state["next"]}
             state["next"] += 1
-            return None
         return None
     monkeypatch.setattr(auth, "executar", fake_exec)
     first = auth.obter_ou_criar_crianca(1, "Ana")
@@ -79,12 +61,7 @@ def test_object_authorization_matrix(monkeypatch):
     assert not security.usuario_pode_acessar_crianca(21, "cuidador", 99)
     assert security.usuario_pode_acessar_crianca(30, "profissional", 99)
     assert not security.usuario_pode_acessar_crianca(31, "profissional", 99)
-
-
-def test_unknown_profile_is_denied(monkeypatch):
-    from utils import security
-    monkeypatch.setattr(security, "executar", lambda *a, **k: {"utilizador_id": 1, "cuidador_id": 2})
-    assert not security.usuario_pode_acessar_crianca(1, "admin", 9)
+    assert not security.usuario_pode_acessar_crianca(1, "admin", 99)
 
 
 def test_session_expiration_and_revocation(monkeypatch):
@@ -114,3 +91,16 @@ def test_sql_is_parameterized_in_child_creation(monkeypatch):
     auth.obter_ou_criar_crianca(1, "<script>alert(1)</script>")
     assert all("<script>" not in sql for sql, _ in seen)
     assert any(params == (1,) for _, params in seen)
+
+
+def test_source_enforces_sensitive_paths():
+    from pathlib import Path
+    auth_source = Path("modules/auth.py").read_text(encoding="utf-8")
+    logs_source = Path("modules/logs.py").read_text(encoding="utf-8")
+    controller_source = Path("controllers/auth_controller.py").read_text(encoding="utf-8")
+    assert "_buscar_crianca_canonica_por_nome" not in auth_source
+    assert "_mesclar_criancas" not in auth_source
+    assert "exigir_acesso_crianca" in logs_source
+    assert "validar_sessao(token)" in controller_source
+    assert "SameSite=Strict" in controller_source
+    assert "Secure" in controller_source
