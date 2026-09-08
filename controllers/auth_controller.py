@@ -23,7 +23,15 @@ from modules.auth import (
 COOKIE_NAME = "picta_session"
 COOKIE_MAX_AGE = 30 * 60
 SESSION_RENEW_INTERVAL_SECONDS = 60
-COOKIE_ATTRIBUTES = "path=/; Secure; SameSite=Strict"
+
+
+def _cookie_attributes() -> str:
+    try:
+        url = str(st.context.url or "")
+        secure = " Secure;" if url.lower().startswith("https://") else ""
+    except Exception:
+        secure = ""
+    return f"path=/;{secure} SameSite=Strict"
 
 
 def _executar_sessao_em_background(nome: str, func, *args) -> None:
@@ -45,7 +53,7 @@ def _ler_cookie() -> Optional[str]:
 def _escrever_cookie_neste_render(token: str) -> None:
     components.html(
         f"<script>window.parent.document.cookie = "
-        f"'{COOKIE_NAME}={token}; max-age={COOKIE_MAX_AGE}; {COOKIE_ATTRIBUTES}';</script>",
+        f"'{COOKIE_NAME}={token}; max-age={COOKIE_MAX_AGE}; {_cookie_attributes()}';</script>",
         height=1,
     )
 
@@ -53,7 +61,7 @@ def _escrever_cookie_neste_render(token: str) -> None:
 def _apagar_cookie() -> None:
     components.html(
         f"<script>window.parent.document.cookie = "
-        f"'{COOKIE_NAME}=; max-age=0; {COOKIE_ATTRIBUTES}';</script>",
+        f"'{COOKIE_NAME}=; max-age=0; {_cookie_attributes()}';</script>",
         height=1,
     )
 
