@@ -1,0 +1,20 @@
+name: Security Tests
+
+on:
+  push:
+    branches: [main, security-hardening-2026-09]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Run security tests
+        run: pytest -q tests/test_security.py
