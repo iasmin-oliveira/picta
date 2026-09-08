@@ -21,19 +21,12 @@ O PICTA é um assistente digital de Comunicação Aumentativa e Alternativa (CAA
 ### Instalação
 
 ```bash
-# 1. Clone o repositório
 git clone https://github.com/SEU-USUARIO/picta.git
 cd picta
-
-# 2. Crie e ative o ambiente virtual
 python -m venv venv
 source venv/bin/activate        # Linux/macOS
-# venv\Scripts\activate         # Windows
-
-# 3. Instale as dependências
+# venv\\Scripts\\activate      # Windows
 pip install -r requirements.txt
-
-# 4. Execute a aplicação
 streamlit run app.py
 ```
 
@@ -41,14 +34,17 @@ A aplicação abrirá automaticamente em `http://localhost:8501`.
 
 ---
 
-## 🔐 Credenciais de Demonstração
+## 🔐 Ambiente de Demonstração
 
-| Perfil | Utilizador | Senha |
-|---|---|---|
-| 👩‍⚕️ Cuidador / Terapeuta | `cuidador_teste` | `senha123` |
-| 🧒 Criança | `joao` | `joao123` |
+As credenciais de demonstração **não são mantidas no README nem devem ser usadas em produção**.
 
-> O banco de dados é criado e populado automaticamente na primeira execução.
+Para criar usuários de teste, configure explicitamente a variável de ambiente:
+
+```text
+CREATE_TEST_USER=true
+```
+
+Em produção, mantenha `CREATE_TEST_USER=false` e utilize contas individuais com senhas próprias.
 
 ---
 
@@ -56,39 +52,58 @@ A aplicação abrirá automaticamente em `http://localhost:8501`.
 
 ```
 picta/
-├── app.py                  # Entry point — roteador de perfis
+├── app.py
 ├── requirements.txt
 ├── README.md
-├── picta.db                # SQLite (gerado em runtime)
+├── picta.db                  # SQLite somente para desenvolvimento local
 │
 ├── database/
-│   └── db.py               # Conexão, esquema e seed do banco de dados
-│
+│   └── db.py                 # Conexão, esquema e seed do banco
 ├── modules/
-│   ├── auth.py             # Autenticação e consulta de perfis
-│   └── logs.py             # Registo e consulta de interações
-│
+│   ├── auth.py               # Autenticação, sessões e vínculos
+│   └── logs.py               # Registro e consulta de interações
+├── utils/
+│   ├── passwords.py          # Hash de senhas com PBKDF2 + migração legada
+│   └── security.py           # Autorização por criança/vínculo
 ├── views/
-│   ├── login.py            # Tela de Login
-│   ├── painel_crianca.py   # Grade de pictogramas (perfil Criança)
-│   └── dashboard_cuidador.py # Dashboard analítico (perfil Cuidador)
-│
+│   ├── login.py
+│   ├── painel_crianca.py
+│   └── dashboard_cuidador/
 └── assets/
-    └── pictogramas/        # Imagens dos pictogramas (Ciclos futuros)
 ```
 
 ---
 
-## 📦 Banco de Dados (SQLite)
+## 🔒 Segurança e Isolamento de Dados
 
-O arquivo `picta.db` é gerado automaticamente com as seguintes tabelas:
+O acesso aos dados de uma criança é condicionado ao usuário autenticado e ao vínculo correspondente:
+
+- **Criança:** somente seu próprio registro.
+- **Responsável/Cuidador:** somente crianças vinculadas à sua conta.
+- **Profissional:** somente pacientes vinculados explicitamente.
+- **Interações:** leitura e gravação passam por autorização no servidor.
+- **Senhas:** novas senhas usam PBKDF2-SHA-256 com salt aleatório. Hashes SHA-256 antigos são migrados automaticamente no primeiro login.
+- **Sessões:** expiração por inatividade de 30 minutos e duração máxima de 8 horas.
+- **Produção:** o banco PostgreSQL/Neon deve ser configurado por segredo/variável de ambiente; SQLite é destinado ao desenvolvimento local.
+
+Não use dados reais de crianças em ambientes de demonstração ou desenvolvimento.
+
+---
+
+## 📦 Banco de Dados
+
+O PICTA utiliza PostgreSQL/Neon quando `DATABASE_URL` ou `NEON_DATABASE_URL` está configurada. Na ausência dessas configurações, o projeto usa SQLite local para desenvolvimento.
+
+Principais tabelas:
 
 | Tabela | Descrição |
 |---|---|
-| `Utilizadores` | Contas de login (criança e cuidador), senha em hash SHA-256 |
-| `Criancas` | Dados das crianças vinculadas a um cuidador |
-| `Pictogramas` | Catálogo de pictogramas por categoria (emoção, ação, necessidade) |
-| `Registos_Interacao` | Log de cada clique da criança (data, hora, pictograma) |
+| `Utilizadores` | Contas de acesso e hashes de senha |
+| `Criancas` | Dados das crianças e relações de responsabilidade |
+| `Pictogramas` | Catálogo de pictogramas |
+| `Registos_Interacao` | Registros de comunicação da criança |
+| `Vinculos` | Relações de acesso entre usuários e crianças |
+| `Sessoes` | Sessões autenticadas com expiração |
 
 ---
 
@@ -106,9 +121,9 @@ O arquivo `picta.db` é gerado automaticamente com as seguintes tabelas:
 
 - **Python 3.11+**
 - **Streamlit** — framework de interface web
-- **SQLite** — banco de dados relacional local
-- **Pandas** — análise de dados (Ciclo 3)
-- **hashlib** — hash seguro de senhas (SHA-256)
+- **PostgreSQL / SQLite** — persistência
+- **Pandas** — análise de dados
+- **hashlib / PBKDF2** — armazenamento seguro de senhas
 
 ---
 
