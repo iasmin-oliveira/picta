@@ -42,6 +42,14 @@ def exigir_acesso_crianca(crianca_id: int) -> bool:
     return usuario_pode_acessar_crianca(int(usuario["id"]), str(usuario.get("perfil") or ""), int(crianca_id or 0))
 
 
+def exigir_usuario_sessao(usuario_id: int) -> bool:
+    """Ensure a sensitive account operation targets the authenticated user."""
+    usuario = _current_user()
+    if not usuario or not usuario_id:
+        return False
+    return int(usuario.get("id") or 0) == int(usuario_id)
+
+
 def criar_ou_obter_crianca_do_usuario(usuario_id: int, nome: str) -> int:
     """Create/get only the child owned by this user. Never matches by name."""
     if not usuario_id:
