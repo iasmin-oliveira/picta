@@ -1,6 +1,7 @@
 import hashlib
 import sqlite3
 from datetime import datetime, timedelta
+from pathlib import Path
 
 
 def test_password_hash_is_salted_and_verifies():
@@ -67,7 +68,7 @@ def test_object_authorization_matrix(monkeypatch):
 def test_session_expiration_and_revocation(monkeypatch):
     from modules import auth
     now = datetime.utcnow()
-    row = {"id": 1, "nome": "A", "perfil": "crianca", "username": "a", "email": None, "deve_trocar_senha": 0, "crianca_id": 9, "ultima_atividade": (now - timedelta(minutes=31)).isoformat()}
+    row = {"id": 1, "nome": "A", "perfil": "crianca", "username": "a", "email": None, "senha_hash": "x", "deve_trocar_senha": 0, "crianca_id": 9, "ultima_atividade": (now - timedelta(minutes=31)).isoformat()}
     calls = []
     def fake_exec(sql, params=(), **kwargs):
         calls.append(sql)
@@ -94,7 +95,6 @@ def test_sql_is_parameterized_in_child_creation(monkeypatch):
 
 
 def test_source_enforces_sensitive_paths():
-    from pathlib import Path
     auth_source = Path("modules/auth.py").read_text(encoding="utf-8")
     logs_source = Path("modules/logs.py").read_text(encoding="utf-8")
     controller_source = Path("controllers/auth_controller.py").read_text(encoding="utf-8")
@@ -104,3 +104,25 @@ def test_source_enforces_sensitive_paths():
     assert "validar_sessao(token)" in controller_source
     assert "SameSite=Strict" in controller_source
     assert "Secure" in controller_source
+
+
+def test_user_controlled_values_are_escaped_before_raw_html():
+    files = [
+        "views/dashboard_cuidador/_crianca.py",
+        "views/dashboard_cuidador/_hoje.py",
+        "views/dashboard_cuidador/_historico.py",
+        "views/dashboard_cuidador/_vinculos.py",
+        "views/dashboard_profissional/__init__.py",
+        "views/dashboard_profissional/_painel.py",
+        "views/dashboard_profissional/_exportacao.py",
+    ]
+    for filename in files:
+        source = Path(filename).read_text(encoding="utf-8")
+        assert "import html" in source, filename
+        assert "html.escape" in source, filename
+
+
+def test_streamlit_security_config_is_not_disabled():
+    config = Path(".streamlit/config.toml").read_text(encoding="utf-8").lower()
+    assert "enablexsrfprotection = false" not in config
+    assert "enablecors = false" not in config
