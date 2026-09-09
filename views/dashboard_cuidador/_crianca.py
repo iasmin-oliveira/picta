@@ -4,6 +4,7 @@ Seção "Minha Criança" do dashboard do cuidador.
 """
 
 import datetime
+import html
 import streamlit as st
 from collections import Counter
 
@@ -39,6 +40,8 @@ def render_crianca(usuario_id, criancas, crianca_id, crianca_nome: str) -> None:
         return
 
     nome_curto = crianca_nome.split()[0]
+    nome_html = html.escape(str(crianca_nome), quote=True)
+    nome_curto_html = html.escape(str(nome_curto), quote=True)
     col_info, col_edit = st.columns([1, 1])
 
     with col_info:
@@ -53,12 +56,13 @@ def render_crianca(usuario_id, criancas, crianca_id, crianca_nome: str) -> None:
             except Exception:
                 pass
         dn_exibicao = format_date_br(dn_str) if dn_str else ""
+        dn_html = html.escape(str(dn_exibicao), quote=True)
 
         st.markdown(
             f'<div class="crianca-card"><div class="crianca-avatar">🧒</div>'
-            f'<div class="crianca-nome">{crianca_nome}</div><div class="crianca-info">'
-            f'{f"Nascimento: {dn_exibicao}" if dn_exibicao else "Data de nascimento: não informada"}'
-            f'{f" · {idade_txt}" if idade_txt else ""}</div></div>', unsafe_allow_html=True,
+            f'<div class="crianca-nome">{nome_html}</div><div class="crianca-info">'
+            f'{f"Nascimento: {dn_html}" if dn_exibicao else "Data de nascimento: não informada"}'
+            f'{f" · {html.escape(str(idade_txt), quote=True)}" if idade_txt else ""}</div></div>', unsafe_allow_html=True,
         )
 
         interacoes = obter_interacoes(crianca_id, limite=200)
@@ -79,13 +83,15 @@ def render_crianca(usuario_id, criancas, crianca_id, crianca_nome: str) -> None:
         dicas = []
         if necs_all:
             top = Counter(i['pictograma'] for i in necs_all).most_common(1)[0]
-            dicas.append(f'O pedido mais frequente de <b>{nome_curto}</b> é <b>{top[0].lower()}</b> ({top[1]}×). Garantir que este item esteja sempre acessível pode reduzir frustrações.')
+            top_html = html.escape(str(top[0]).lower(), quote=True)
+            dicas.append(f'O pedido mais frequente de <b>{nome_curto_html}</b> é <b>{top_html}</b> ({top[1]}×). Garantir que este item esteja sempre acessível pode reduzir frustrações.')
         if acoes_all:
             top_a = Counter(i['pictograma'] for i in acoes_all).most_common(1)[0]
-            dicas.append(f'<b>{nome_curto}</b> demonstra interesse frequente em <b>{top_a[0].lower()}</b> ({top_a[1]}×). Essa atividade pode ser usada como reforço positivo.')
+            top_a_html = html.escape(str(top_a[0]).lower(), quote=True)
+            dicas.append(f'<b>{nome_curto_html}</b> demonstra interesse frequente em <b>{top_a_html}</b> ({top_a[1]}×). Essa atividade pode ser usada como reforço positivo.')
         em_pos = [i for i in emocs_all if i['pictograma'] in EMOCOES_POSITIVAS]
         if emocs_all and len(em_pos) > len(emocs_all) * 0.5:
-            dicas.append(f'Mais da metade das emoções registradas são positivas! Continue com as rotinas que estão funcionando bem para {nome_curto}.')
+            dicas.append(f'Mais da metade das emoções registradas são positivas! Continue com as rotinas que estão funcionando bem para {nome_curto_html}.')
         if dicas:
             st.markdown('<div class="sec-header" style="margin-top:.5rem">💡 Dicas para você</div>', unsafe_allow_html=True)
             for d in dicas:
@@ -111,5 +117,5 @@ def render_crianca(usuario_id, criancas, crianca_id, crianca_nome: str) -> None:
                 if erro:
                     st.error(f"❌ {erro}")
                 else:
-                    st.success(f"✅ Dados de {novo_nome.split()[0]} atualizados!")
+                    st.success(f"✅ Dados de {html.escape(novo_nome.split()[0], quote=True)} atualizados!")
                     st.rerun()
