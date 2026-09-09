@@ -198,6 +198,9 @@ def render_troca_senha_obrigatoria() -> None:
 def logout() -> None:
     token = st.session_state.get("token")
     if token:
-        _executar_sessao_em_background("picta-revogar-sessao", revogar_sessao, token)
+        try:
+            revogar_sessao(token)
+        except Exception:
+            pass
     _encerrar_sessao_local()
     st.rerun()
