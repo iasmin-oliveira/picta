@@ -1,17 +1,9 @@
 """
 PICTA — views/dashboard_profissional/__init__.py
 Ponto de entrada do dashboard Clínico / Profissional de Saúde.
-
-Estrutura do pacote:
-    _constants.py   — constantes compartilhadas
-    _painel.py      — Painel Clínico: KPIs, alertas, diário (~120 linhas)
-    _pacientes.py   — Pacientes: lista e cards (~80 linhas)
-    _insights.py    — Insights IA: gráficos + relatório (~200 linhas)
-    _exportacao.py  — Exportação: CSV + PDF (~90 linhas)
-    _perfil.py      — Meu Perfil: edição de conta (~70 linhas)
-    __init__.py     — sidebar + roteamento (~80 linhas)
 """
 
+import html
 import streamlit as st
 
 from modules.auth import obter_criancas_do_usuario
@@ -28,14 +20,15 @@ from ._perfil import render_perfil
 def render() -> None:
     inject_css('picta_design.css')
 
-    usuario    = st.session_state.get('usuario', {})
-    nome       = usuario.get('nome', '')
+    usuario = st.session_state.get('usuario', {})
+    nome = usuario.get('nome', '')
     usuario_id = usuario.get('id')
-    primeiro   = nome.split()[0] if nome else ''
-    iniciais   = ''.join(p[0].upper() for p in nome.split()[:2]) or 'P'
-    criancas   = obter_criancas_do_usuario(usuario_id, 'profissional')
+    primeiro = nome.split()[0] if nome else ''
+    iniciais = ''.join(p[0].upper() for p in nome.split()[:2]) or 'P'
+    nome_html = html.escape(str(nome), quote=True)
+    iniciais_html = html.escape(str(iniciais), quote=True)
+    criancas = obter_criancas_do_usuario(usuario_id, 'profissional')
 
-    # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown(
             '<p style="font-size:.65rem;font-weight:800;text-transform:uppercase;'
@@ -63,9 +56,8 @@ def render() -> None:
                 unsafe_allow_html=True,
             )
             nomes = [c['nome'] for c in criancas]
-            sel   = st.selectbox("Paciente", nomes, key="prof_sel",
-                                 label_visibility="collapsed")
-            crianca_id   = next(c['id'] for c in criancas if c['nome'] == sel)
+            sel = st.selectbox("Paciente", nomes, key="prof_sel", label_visibility="collapsed")
+            crianca_id = next(c['id'] for c in criancas if c['nome'] == sel)
             crianca_nome = sel
 
         st.markdown(
@@ -79,9 +71,7 @@ def render() -> None:
         for chave, emoji, titulo, desc in NAV:
             ativo = st.session_state['prof_pag'] == chave
             if st.button(
-                f"{emoji}  {titulo}",
-                key=f"prof_nav_{chave}",
-                use_container_width=True,
+                f"{emoji}  {titulo}", key=f"prof_nav_{chave}", use_container_width=True,
                 type="primary" if ativo else "secondary",
             ):
                 st.session_state['prof_pag'] = chave
@@ -89,7 +79,7 @@ def render() -> None:
             if ativo:
                 st.markdown(
                     f'<p style="font-size:.72rem;color:#6b7280;font-weight:600;'
-                    f'padding:0 0 .4rem 1rem;margin:0">{desc}</p>',
+                    f'padding:0 0 .4rem 1rem;margin:0">{html.escape(str(desc), quote=True)}</p>',
                     unsafe_allow_html=True,
                 )
 
@@ -100,14 +90,11 @@ def render() -> None:
 
         st.markdown(
             f'<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0">'
-            f'  <div style="width:32px;height:32px;border-radius:50%;'
-            f'  background:#e0e7ff;display:flex;align-items:center;justify-content:center;'
-            f'  font-size:.8rem;font-weight:800;color:#4338ca;flex-shrink:0">{iniciais}</div>'
+            f'  <div style="width:32px;height:32px;border-radius:50%;background:#e0e7ff;display:flex;'
+            f'  align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:#4338ca;flex-shrink:0">{iniciais_html}</div>'
             f'  <div style="overflow:hidden;min-width:0">'
-            f'    <div style="font-size:.82rem;font-weight:800;color:#1e1b4b;'
-            f'    white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{nome}</div>'
-            f'    <div style="font-size:.7rem;color:#9ca3af;font-weight:600">'
-            f'    Profissional de Saúde</div>'
+            f'    <div style="font-size:.82rem;font-weight:800;color:#1e1b4b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{nome_html}</div>'
+            f'    <div style="font-size:.7rem;color:#9ca3af;font-weight:600">Profissional de Saúde</div>'
             f'  </div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -116,7 +103,6 @@ def render() -> None:
             from controllers.auth_controller import logout
             logout()
 
-    # ── Roteamento ────────────────────────────────────────────────────────────
     pag = st.session_state.get('prof_pag', 'painel')
 
     if pag == 'perfil':
@@ -131,10 +117,8 @@ def render() -> None:
         st.markdown(
             '<div style="text-align:center;padding:4rem 2rem">'
             '  <div style="font-size:3.5rem;margin-bottom:1rem">🩺</div>'
-            '  <div style="font-size:1.1rem;font-weight:800;color:#1e1b4b;margin-bottom:.5rem">'
-            '    Nenhum paciente vinculado</div>'
-            '  <div style="color:#9ca3af;font-weight:600">'
-            '    Peça ao responsável da criança para te convidar pelo PICTA.</div>'
+            '  <div style="font-size:1.1rem;font-weight:800;color:#1e1b4b;margin-bottom:.5rem">Nenhum paciente vinculado</div>'
+            '  <div style="color:#9ca3af;font-weight:600">Peça ao responsável da criança para te convidar pelo PICTA.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
