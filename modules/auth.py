@@ -146,7 +146,8 @@ def obter_criancas_do_usuario(usuario_id: int, perfil: str) -> List[dict]:
 
 
 def vincular_crianca_responsavel(responsavel_id: int, crianca_username: str) -> Optional[str]:
-    if not responsavel_id:
+    from utils.security import exigir_usuario_sessao
+    if not responsavel_id or not exigir_usuario_sessao(responsavel_id):
         return "Sessao invalida. Faca login novamente."
     crianca_user = executar("SELECT id, nome, perfil FROM Utilizadores WHERE username = ?", (crianca_username.strip().lower(),), fetchone=True)
     if not crianca_user:
@@ -161,7 +162,8 @@ def vincular_crianca_responsavel(responsavel_id: int, crianca_username: str) -> 
 
 
 def convidar_profissional(responsavel_id: int, prof_username: str, crianca_id: int) -> Optional[str]:
-    if not responsavel_id:
+    from utils.security import exigir_usuario_sessao
+    if not responsavel_id or not exigir_usuario_sessao(responsavel_id):
         return "Sessao invalida. Faca login novamente."
     if not executar("SELECT id FROM Criancas WHERE id = ? AND cuidador_id = ?", (crianca_id, responsavel_id), fetchone=True):
         return "Crianca nao encontrada ou sem permissao."
@@ -177,13 +179,15 @@ def convidar_profissional(responsavel_id: int, prof_username: str, crianca_id: i
 
 
 def obter_usuario_por_id(usuario_id: int) -> Optional[dict]:
-    if not usuario_id:
+    from utils.security import exigir_usuario_sessao
+    if not usuario_id or not exigir_usuario_sessao(usuario_id):
         return None
     return executar("SELECT id, nome, username, email, perfil FROM Utilizadores WHERE id = ?", (usuario_id,), fetchone=True)
 
 
 def atualizar_usuario(usuario_id: int, nome: str, username: str, nova_senha: str = "", email: Optional[str] = None) -> Optional[str]:
-    if not usuario_id:
+    from utils.security import exigir_usuario_sessao
+    if not usuario_id or not exigir_usuario_sessao(usuario_id):
         return "Sessao invalida. Faca login novamente."
     nome, username = nome.strip(), username.strip().lower()
     email_limpo = email.strip().lower() if email is not None else None
@@ -195,11 +199,13 @@ def atualizar_usuario(usuario_id: int, nome: str, username: str, nova_senha: str
         return "Este nome de utilizador ja esta em uso por outra conta."
     campos, params = ["nome = ?", "username = ?"], [nome, username]
     if email_limpo is not None:
-        campos.append("email = ?"); params.append(email_limpo or None)
+        campos.append("email = ?")
+        params.append(email_limpo or None)
     if nova_senha:
         if len(nova_senha) < 6:
             return "A nova senha deve ter pelo menos 6 caracteres."
-        campos.extend(["senha_hash = ?", "deve_trocar_senha = ?"]); params.extend([hash_password(nova_senha), False])
+        campos.extend(["senha_hash = ?", "deve_trocar_senha = ?"])
+        params.extend([hash_password(nova_senha), False])
     params.append(usuario_id)
     executar(f"UPDATE Utilizadores SET {', '.join(campos)} WHERE id = ?", tuple(params), commit=True)
     return None
@@ -224,7 +230,8 @@ def solicitar_recuperacao_senha(email: str) -> Optional[str]:
 
 
 def trocar_senha_obrigatoria(usuario_id: int, nova_senha: str) -> Optional[str]:
-    if not usuario_id:
+    from utils.security import exigir_usuario_sessao
+    if not usuario_id or not exigir_usuario_sessao(usuario_id):
         return "Sessao invalida. Faca login novamente."
     if len(nova_senha or "") < 6:
         return "A nova senha deve ter pelo menos 6 caracteres."
@@ -233,6 +240,9 @@ def trocar_senha_obrigatoria(usuario_id: int, nova_senha: str) -> Optional[str]:
 
 
 def atualizar_senha_crianca_responsavel(responsavel_id: int, crianca_id: int, nova_senha: str) -> Optional[str]:
+    from utils.security import exigir_usuario_sessao
+    if not responsavel_id or not exigir_usuario_sessao(responsavel_id):
+        return "Sessao invalida. Faca login novamente."
     if len(nova_senha or "") < 6:
         return "A nova senha deve ter pelo menos 6 caracteres."
     row = executar("SELECT utilizador_id FROM Criancas WHERE id = ? AND cuidador_id = ?", (crianca_id, responsavel_id), fetchone=True)
@@ -277,15 +287,13 @@ def listar_profissionais_da_crianca(crianca_id: int) -> List[dict]:
     from utils.security import exigir_acesso_crianca
     if not exigir_acesso_crianca(crianca_id):
         return []
-    return executar("SELECT u.id, u.nome, u.username FROM Vinculos v JOIN Utilizadores u ON u.id = v.usuario_id WHERE v.crianca_id = ? ORDER BY u.nome", (crianca_id,), fetchall=True) or []
+    return executar("SELECT u.id, u.nome, u.username FROM Utilizadores u JOIN Vinculos v ON v.usuario_id = u.id WHERE v.crianca_id = ? AND u.perfil = 'profissional' ORDER BY u.nome", (crianca_id,), fetchall=True) or []
 
 
 def _parse_datetime(value) -> Optional[datetime]:
     if not value:
         return None
-    if isinstance(value, datetime):
-        return value
     try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
+        return datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
         return None
