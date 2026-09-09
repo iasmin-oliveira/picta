@@ -3,6 +3,7 @@ PICTA — views/dashboard_cuidador/_vinculos.py
 Seção "Vínculos" do dashboard do cuidador.
 """
 
+import html
 import streamlit as st
 
 from modules.auth import (
@@ -28,8 +29,7 @@ def render_vinculos(usuario_id, perfil: str, criancas) -> None:
     col_add, col_list = st.columns([1, 1])
 
     with col_add:
-        st.markdown('<div class="sec-header">🧒 Vincular criança</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="sec-header">🧒 Vincular criança</div>', unsafe_allow_html=True)
         st.caption(
             "Informe o **nome de usuário** da criança (definido no cadastro) "
             "para vinculá-la ao seu painel."
@@ -48,17 +48,14 @@ def render_vinculos(usuario_id, perfil: str, criancas) -> None:
                         st.rerun()
 
         if criancas_resp:
-            st.markdown('<div class="sec-header">👩‍⚕️ Convidar profissional</div>',
-                        unsafe_allow_html=True)
+            st.markdown('<div class="sec-header">👩‍⚕️ Convidar profissional</div>', unsafe_allow_html=True)
             st.caption(
                 "Convide um médico, terapeuta ou fonoaudiólogo para acompanhar "
                 "as comunicações da criança pelo PICTA."
             )
             with st.form("form_prof"):
-                uname_p   = st.text_input("Nome de usuário do profissional",
-                                          placeholder="Ex: dra.ana")
-                crianca_p = st.selectbox("Para qual criança?",
-                                         [c['nome'] for c in criancas_resp])
+                uname_p = st.text_input("Nome de usuário do profissional", placeholder="Ex: dra.ana")
+                crianca_p = st.selectbox("Para qual criança?", [c['nome'] for c in criancas_resp])
                 cid_p = next(c['id'] for c in criancas_resp if c['nome'] == crianca_p)
                 if st.form_submit_button("📨 Convidar", use_container_width=True, type="primary"):
                     if not uname_p.strip():
@@ -90,12 +87,13 @@ def render_vinculos(usuario_id, perfil: str, criancas) -> None:
         )
         for idx, c in enumerate(criancas_resp):
             profs = listar_profissionais_da_crianca(c['id'])
-            grad  = _GRADS[idx % len(_GRADS)]
+            grad = _GRADS[idx % len(_GRADS)]
+            child_name = html.escape(str(c.get('nome', '')), quote=True)
             profs_html = ''.join(
                 f'<div style="font-size:.8rem;color:#4b5563;font-weight:600;'
                 f'padding:.3rem 0;border-top:1px dashed #e0e7ff;">'
-                f'  👩‍⚕️ {p["nome"]}'
-                f'  <span style="color:#9ca3af;font-size:.72rem"> · @{p["username"]}</span>'
+                f'  👩‍⚕️ {html.escape(str(p.get("nome", "")), quote=True)}'
+                f'  <span style="color:#9ca3af;font-size:.72rem"> · @{html.escape(str(p.get("username", "")), quote=True)}</span>'
                 f'</div>'
                 for p in profs
             ) if profs else (
@@ -104,12 +102,12 @@ def render_vinculos(usuario_id, perfil: str, criancas) -> None:
             )
             st.markdown(
                 f'<div class="patient-card">'
-                f'  <div class="patient-card-top" style="background:{grad}">'
+                f'  <div class="patient-card-top" style="background:{html.escape(str(grad), quote=True)}">'
                 f'    <span class="status-badge status-green">ATIVO</span>'
                 f'  </div>'
                 f'  <div class="patient-card-body">'
                 f'    <div class="patient-card-avatar">🧒</div>'
-                f'    <div class="patient-card-name">{c["nome"]}</div>'
+                f'    <div class="patient-card-name">{child_name}</div>'
                 f'    <div class="patient-card-sub" style="color:#6366f1">'
                 f'      {len(profs)} profissional(is) vinculado(s)</div>'
                 f'    {profs_html}'
