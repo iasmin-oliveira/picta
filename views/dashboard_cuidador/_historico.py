@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import html
 
 import pandas as pd
 import streamlit as st
@@ -20,11 +21,12 @@ from ._constants import BADGE_CAT, COR_CAT
 
 def render_historico(criancas, crianca_id, crianca_nome: str) -> None:
     nome_curto = crianca_nome.split()[0] if crianca_nome else ""
+    nome_curto_html = html.escape(str(nome_curto), quote=True)
     st.markdown(
         f'<div class="page-header">'
         f'  <div class="page-title">📅 Histórico</div>'
         f'  <div class="page-subtitle">'
-        f'    Tudo que <b>{nome_curto}</b> comunicou, organizado por data.</div>'
+        f'    Tudo que <b>{nome_curto_html}</b> comunicou, organizado por data.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -62,11 +64,7 @@ def render_historico(criancas, crianca_id, crianca_nome: str) -> None:
     if data_min == hoje:
         filtradas = [i for i in interacoes if str(i.get("registado_em", ""))[:10] == hoje.isoformat()]
     else:
-        filtradas = [
-            i
-            for i in interacoes
-            if not data_min or str(i.get("registado_em", ""))[:10] >= data_min.isoformat()
-        ]
+        filtradas = [i for i in interacoes if not data_min or str(i.get("registado_em", ""))[:10] >= data_min.isoformat()]
     cat_key = mapa_cat[cat_sel_lbl]
     if cat_key:
         filtradas = [i for i in filtradas if i.get("categoria") == cat_key]
@@ -77,11 +75,9 @@ def render_historico(criancas, crianca_id, crianca_nome: str) -> None:
             df_e = _formatar_exportacao(filtradas, crianca_nome)
             csv = df_e.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
             st.download_button(
-                "📥 Baixar",
-                csv,
+                "📥 Baixar", csv,
                 f"historico_{safe_filename(nome_curto)}_{filename_date(hoje)}.csv",
-                "text/csv",
-                use_container_width=True,
+                "text/csv", use_container_width=True,
             )
 
     if not filtradas:
@@ -109,24 +105,24 @@ def render_historico(criancas, crianca_id, crianca_nome: str) -> None:
 
         st.markdown(
             f'<div class="date-group">'
-            f'  <span class="date-badge">📅 {label}</span>'
+            f'  <span class="date-badge">📅 {html.escape(str(label), quote=True)}</span>'
             f'  <div class="date-line"></div>'
             f'</div>',
             unsafe_allow_html=True,
         )
         for reg in items:
-            cat = reg.get("categoria", "")
+            cat = str(reg.get("categoria", ""))
             hora = format_time(reg.get("registado_em"))
             emoji = reg.get("emoji", "")
-            pict = reg.get("pictograma", "").title()
+            pict = str(reg.get("pictograma", "")).title()
             badge_cls, badge_txt = BADGE_CAT.get(cat, ("badge-acao", cat))
             cor = COR_CAT.get(cat, "#6366f1")
             st.markdown(
-                f'<div class="diary-item" style="border-left:3.5px solid {cor}">'
-                f'  <span style="font-size:.75rem;color:#6b7280;min-width:2.8rem;font-weight:800">{hora}</span>'
-                f'  <div class="diary-emoji">{emoji}</div>'
-                f'  <div class="diary-name">{pict}</div>'
-                f'  <span class="diary-badge {badge_cls}">{badge_txt}</span>'
+                f'<div class="diary-item" style="border-left:3.5px solid {html.escape(str(cor), quote=True)}">'
+                f'  <span style="font-size:.75rem;color:#6b7280;min-width:2.8rem;font-weight:800">{html.escape(str(hora), quote=True)}</span>'
+                f'  <div class="diary-emoji">{html.escape(str(emoji), quote=True)}</div>'
+                f'  <div class="diary-name">{html.escape(str(pict), quote=True)}</div>'
+                f'  <span class="diary-badge {html.escape(str(badge_cls), quote=True)}">{html.escape(str(badge_txt), quote=True)}</span>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
