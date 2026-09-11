@@ -165,7 +165,11 @@ def vincular_crianca_responsavel(responsavel_id: int, crianca_username: str) -> 
     crianca_id = obter_ou_criar_crianca(crianca_user["id"], crianca_user["nome"])
     if not crianca_id:
         return "Nao foi possivel preparar o registro da crianca."
-    executar("UPDATE Criancas SET cuidador_id = ? WHERE id = ?", (responsavel_id, crianca_id), commit=True)
+    existente = executar("SELECT cuidador_id FROM Criancas WHERE id = ?", (crianca_id,), fetchone=True)
+    cuidador_atual = int((existente or {}).get("cuidador_id") or 0)
+    if cuidador_atual and cuidador_atual != int(responsavel_id):
+        return "Esta crianca ja esta vinculada a outro responsavel."
+    executar("UPDATE Criancas SET cuidador_id = ? WHERE id = ? AND (cuidador_id IS NULL OR cuidador_id = ?)", (responsavel_id, crianca_id, responsavel_id), commit=True)
     return None
 
 
@@ -252,7 +256,7 @@ def atualizar_senha_crianca_responsavel(responsavel_id: int, crianca_id: int, no
     if not responsavel_id or not exigir_usuario_sessao(responsavel_id):
         return "Sessao invalida. Faca login novamente."
     if len(nova_senha or "") < 6:
-        return "A nova senha deve ter pelo menos 6 caracteres."
+        return "A senha deve ter pelo menos 6 caracteres."
     row = executar("SELECT utilizador_id FROM Criancas WHERE id = ? AND cuidador_id = ?", (crianca_id, responsavel_id), fetchone=True)
     if not row or not row.get("utilizador_id"):
         return "Crianca nao encontrada ou sem conta vinculada."
