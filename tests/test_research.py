@@ -1,7 +1,6 @@
 import os
 import sys
 import uuid
-from pathlib import Path
 
 import pytest
 
@@ -140,7 +139,7 @@ def test_research_code_and_task_validation(monkeypatch, tmp_path):
     assert pesquisa.iniciar_sessao(participant_id, "nao_existe")[0] is False
 
 
-def test_research_postgres_isolation_and_schema():
+def test_research_postgres_isolation_and_schema(monkeypatch):
     if not os.getenv("DATABASE_URL"):
         pytest.skip("PostgreSQL de integração não configurado")
 
