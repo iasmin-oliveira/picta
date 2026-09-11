@@ -8,12 +8,15 @@ from zoneinfo import ZoneInfo
 
 from database.db import executar, garantir_pictogramas_seed
 from utils.debug_logger import log_debug
+from utils.security import exigir_acesso_crianca
 
 APP_TZ = ZoneInfo("America/Sao_Paulo")
 
 
 def registar_interacao(crianca_id: int, pictograma_id: int) -> bool:
-    if not crianca_id or not pictograma_id:
+    """Register an interaction only for a child the current session can access."""
+    if not crianca_id or not pictograma_id or not exigir_acesso_crianca(crianca_id):
+        log_debug(f"registro_ignorado_sem_permissao_crianca={crianca_id}")
         return False
     try:
         garantir_pictogramas_seed()
@@ -31,14 +34,14 @@ def registar_interacao(crianca_id: int, pictograma_id: int) -> bool:
         log_debug(f"registro_interacao_ok crianca={crianca_id} pictograma={pictograma_id}")
         return True
     except Exception as exc:
-        print("[PICTA] Erro ao registrar interação:", exc)
         log_debug(f"erro_registrar_interacao crianca={crianca_id} pictograma={pictograma_id}: {exc}")
         return False
 
 
 def obter_interacoes(crianca_id: int, limite: int = 200) -> List[dict]:
-    if not crianca_id:
+    if not crianca_id or not exigir_acesso_crianca(crianca_id):
         return []
+    limite = max(1, min(int(limite), 1000))
     rows = executar(
         "SELECT ri.id, ri.registado_em, "
         "p.nome AS pictograma, p.categoria, p.emoji "
@@ -58,7 +61,7 @@ def obter_interacoes_periodo(
     data_inicio: Optional[datetime.date] = None,
     data_fim: Optional[datetime.date] = None,
 ) -> List[dict]:
-    if not crianca_id:
+    if not crianca_id or not exigir_acesso_crianca(crianca_id):
         return []
 
     query = (

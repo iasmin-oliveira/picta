@@ -1,17 +1,9 @@
 """
 PICTA — views/dashboard_cuidador/__init__.py
 Ponto de entrada do dashboard do Responsável / Cuidador.
-
-Estrutura do pacote:
-    _constants.py  — constantes compartilhadas
-    _hoje.py       — seção Hoje (~120 linhas)
-    _historico.py  — seção Histórico (~80 linhas)
-    _crianca.py    — seção Minha Criança (~110 linhas)
-    _vinculos.py   — seção Vínculos (~80 linhas)
-    _perfil.py     — seção Meu Perfil (~70 linhas)
-    __init__.py    — sidebar + roteamento (~70 linhas)
 """
 
+import html
 import streamlit as st
 
 from modules.auth import obter_criancas_do_usuario
@@ -28,13 +20,15 @@ from ._perfil import render_perfil
 def render() -> None:
     inject_css('picta_design.css')
 
-    usuario    = st.session_state.get('usuario', {})
-    nome       = usuario.get('nome', '')
+    usuario = st.session_state.get('usuario', {})
+    nome = usuario.get('nome', '')
     usuario_id = usuario.get('id')
-    perfil     = usuario.get('perfil', '')
-    primeiro   = nome.split()[0] if nome else ''
-    label      = LABEL_PERFIL.get(perfil, 'Usuário')
-    criancas   = obter_criancas_do_usuario(usuario_id, perfil)
+    perfil = usuario.get('perfil', '')
+    primeiro = nome.split()[0] if nome else ''
+    label = LABEL_PERFIL.get(perfil, 'Usuário')
+    nome_html = html.escape(str(nome), quote=True)
+    label_html = html.escape(str(label), quote=True)
+    criancas = obter_criancas_do_usuario(usuario_id, perfil)
 
     with st.sidebar:
         st.markdown(
@@ -50,15 +44,12 @@ def render() -> None:
             unsafe_allow_html=True,
         )
 
-        # Seletor de criança
         crianca_id, crianca_nome = None, ''
         if criancas:
-            st.markdown('<div class="sidebar-select-label">Acompanhando</div>',
-                        unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-select-label">Acompanhando</div>', unsafe_allow_html=True)
             nomes = [c['nome'] for c in criancas]
-            sel   = st.selectbox("Criança", nomes, key="cui_sel",
-                                 label_visibility="collapsed")
-            crianca_id   = next(c['id'] for c in criancas if c['nome'] == sel)
+            sel = st.selectbox("Criança", nomes, key="cui_sel", label_visibility="collapsed")
+            crianca_id = next(c['id'] for c in criancas if c['nome'] == sel)
             crianca_nome = sel
 
         st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
@@ -67,25 +58,22 @@ def render() -> None:
             st.session_state['cui_pag'] = 'hoje'
 
         for chave, emoji, titulo, desc in NAV:
-            ativo = (st.session_state['cui_pag'] == chave)
-            if st.button(f"{emoji}  {titulo}", key=f"cui_nav_{chave}",
-                         use_container_width=True,
+            ativo = st.session_state['cui_pag'] == chave
+            if st.button(f"{emoji}  {titulo}", key=f"cui_nav_{chave}", use_container_width=True,
                          type="primary" if ativo else "secondary"):
                 st.session_state['cui_pag'] = chave
                 st.rerun()
             if ativo:
-                st.markdown(f'<div class="nav-desc">{desc}</div>',
-                            unsafe_allow_html=True)
+                st.markdown(f'<div class="nav-desc">{html.escape(str(desc), quote=True)}</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
-
         st.markdown(
             f'<div class="sidebar-profile">'
             f'  <div class="sidebar-profile-top">'
             f'    <div class="sidebar-avatar-lg">👨‍👩‍👧</div>'
             f'    <div style="overflow:hidden">'
-            f'      <div class="sidebar-profile-name">{nome}</div>'
-            f'      <div class="sidebar-profile-role">{label}</div>'
+            f'      <div class="sidebar-profile-name">{nome_html}</div>'
+            f'      <div class="sidebar-profile-role">{label_html}</div>'
             f'    </div></div></div>',
             unsafe_allow_html=True,
         )
@@ -93,7 +81,6 @@ def render() -> None:
             from controllers.auth_controller import logout
             logout()
 
-    # Roteamento
     pag = st.session_state.get('cui_pag', 'hoje')
     if pag == 'hoje':
         render_hoje(criancas, crianca_id, crianca_nome, primeiro)
