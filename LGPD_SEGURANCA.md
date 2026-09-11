@@ -20,19 +20,14 @@ O PICTA foi desenvolvido como protótipo acadêmico de Comunicação Aumentativa
 ## 3. Sessões e autenticação
 
 - Cada login cria um token aleatório de sessão armazenado no banco.
+- O token de autenticação do PICTA fica somente no `st.session_state` da sessão do Streamlit e **não é gravado em cookie próprio nem exposto ao JavaScript da página**.
 - A sessão possui **máximo absoluto de 8 horas**.
 - Há expiração por **30 minutos de inatividade**.
 - O token é revogado de forma síncrona no logout.
 - A aplicação revalida a sessão periodicamente durante a navegação.
-- O cookie utiliza `SameSite=Strict` e recebe `Secure` quando a aplicação é acessada por HTTPS.
+- O PICTA não depende mais de `streamlit-cookies-controller` para autenticação.
 
-### Limitação conhecida da arquitetura atual
-
-O Streamlit expõe `st.context.cookies` apenas para leitura e o cookie da sessão do PICTA é criado pelo navegador via JavaScript. Portanto, a arquitetura atual **não fornece `HttpOnly` para esse cookie**.
-
-Isso significa que um XSS que conseguisse executar JavaScript no mesmo contexto poderia potencialmente ler o token. O branch aplica escape aos valores controlados pelo usuário nas áreas que usam HTML customizado, mas isso **não equivale a uma sessão `HttpOnly`**.
-
-Para uma futura versão de produção com dados reais, recomenda-se migrar a autenticação para uma sessão gerenciada pelo servidor/provedor de identidade, com cookie `HttpOnly; Secure; SameSite=Strict` ou mecanismo equivalente.
+A remoção do cookie próprio é intencional: o Streamlit não oferece ao código da aplicação uma API para definir diretamente um cookie próprio com `HttpOnly`. Em vez de tentar simular `HttpOnly` via JavaScript, o token de autenticação da aplicação permanece no estado de sessão do servidor.
 
 ## 4. Isolamento de dados por usuário
 
@@ -85,20 +80,22 @@ A suíte de segurança cobre, entre outros:
 - bloqueio de alteração de conta por ID de outro usuário;
 - isolamento real de registros em SQLite;
 - autorização de leitura/gravação dos históricos;
+- autorização em PostgreSQL executado em container;
 - presença de escaping nas áreas com HTML customizado;
+- ausência de cookie de autenticação criado por JavaScript;
 - configurações que não desativam explicitamente XSRF/CORS.
 
 A GitHub Actions executa a suíte em `tests/` a cada push na branch de segurança e em pull requests para `main`.
 
 ## 9. Pendências para uma versão de produção real
 
-Estas medidas não devem ser consideradas resolvidas apenas pelo branch de hardening:
+Mesmo com o token fora de cookies próprios, estes pontos continuam sendo necessários antes de um uso clínico/produção com dados reais:
 
-- substituir a sessão JavaScript por mecanismo de sessão gerenciado pelo servidor com `HttpOnly`;
 - implementar rate limiting ou proteção equivalente contra tentativas repetidas de login;
 - executar análise de dependências/vulnerabilidades periodicamente;
 - revisar retenção, exclusão, consentimento/base legal e demais requisitos de privacidade aplicáveis ao contexto real;
 - realizar teste de segurança do ambiente implantado, incluindo HTTPS, banco, segredos e permissões;
-- adicionar monitoramento/auditoria apropriados para acessos a dados.
+- adicionar monitoramento/auditoria apropriados para acessos a dados;
+- validar o comportamento de sessão e reconexão no provedor de hospedagem escolhido.
 
-**Conclusão:** o branch de hardening melhora significativamente o isolamento entre contas e crianças no protótipo, mas não deve ser apresentado como uma plataforma clínica pronta para dados reais enquanto as limitações de produção acima não forem tratadas.
+**Conclusão:** o branch de hardening reduz significativamente a superfície de ataque da autenticação e reforça o isolamento entre contas e crianças no protótipo. O uso com dados reais de crianças ainda depende de avaliação de segurança, privacidade e do ambiente de implantação.
