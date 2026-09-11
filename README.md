@@ -38,25 +38,25 @@ A aplicação abrirá automaticamente em `http://localhost:8501`.
 
 As credenciais de demonstração **não são mantidas no README nem devem ser usadas em produção**.
 
-Para criar usuários de teste, configure explicitamente a variável de ambiente:
+Para criar usuários de teste, configure explicitamente:
 
 ```text
 CREATE_TEST_USER=true
 ```
 
-Em produção, mantenha `CREATE_TEST_USER=false` e utilize contas individuais com senhas próprias.
+Em ambientes reais, mantenha `CREATE_TEST_USER=false` e utilize contas individuais com senhas próprias.
+
+**Não utilize dados reais de crianças em desenvolvimento, demonstrações públicas ou ambientes de teste.**
 
 ---
 
 ## 📁 Estrutura do Projeto
 
-```
+```text
 picta/
 ├── app.py
 ├── requirements.txt
 ├── README.md
-├── picta.db                  # SQLite somente para desenvolvimento local
-│
 ├── database/
 │   └── db.py                 # Conexão, esquema e seed do banco
 ├── modules/
@@ -72,6 +72,8 @@ picta/
 └── assets/
 ```
 
+O banco SQLite local (`picta.db`) é criado em tempo de execução e é ignorado pelo Git. Nunca versionar banco local ou banco de produção.
+
 ---
 
 ## 🔒 Segurança e Isolamento de Dados
@@ -82,11 +84,15 @@ O acesso aos dados de uma criança é condicionado ao usuário autenticado e ao 
 - **Responsável/Cuidador:** somente crianças vinculadas à sua conta.
 - **Profissional:** somente pacientes vinculados explicitamente.
 - **Interações:** leitura e gravação passam por autorização no servidor.
-- **Senhas:** novas senhas usam PBKDF2-SHA-256 com salt aleatório. Hashes SHA-256 antigos são migrados automaticamente no primeiro login.
+- **Vínculos:** uma criança já vinculada a outro responsável não pode ser tomada por outra conta através do formulário de vínculo.
+- **Senhas:** novas senhas usam PBKDF2-HMAC-SHA-256 com salt aleatório e 600.000 iterações. Hashes SHA-256 antigos são migrados automaticamente no primeiro login.
 - **Sessões:** expiração por inatividade de 30 minutos e duração máxima de 8 horas.
-- **Produção:** o banco PostgreSQL/Neon deve ser configurado por segredo/variável de ambiente; SQLite é destinado ao desenvolvimento local.
+- **HTML customizado:** valores controlados pelo usuário são escapados antes da renderização.
+- **Banco:** PostgreSQL/Neon deve ser configurado por segredo/variável de ambiente; SQLite é destinado ao desenvolvimento local.
 
-Não use dados reais de crianças em ambientes de demonstração ou desenvolvimento.
+### Limitação conhecida da sessão
+
+O cookie de sessão atual é criado pelo navegador via JavaScript, portanto não é possível marcar esse cookie como `HttpOnly` com a arquitetura atual. Em produção com dados reais, recomenda-se migrar para uma sessão gerenciada pelo servidor/provedor de identidade com proteção equivalente a `HttpOnly; Secure; SameSite=Strict`.
 
 ---
 
@@ -107,6 +113,14 @@ Principais tabelas:
 
 ---
 
+## 🧪 Testes de Segurança
+
+A suíte em `tests/` cobre autenticação, migração de senha, isolamento por perfil, sessões, autorização de logs, isolamento real em SQLite, prevenção de sequestro de vínculo e escaping de valores exibidos em HTML customizado.
+
+A GitHub Actions executa a suíte completa a cada push na branch de segurança e em pull requests para `main`.
+
+---
+
 ## 🗓️ Sprints de Desenvolvimento
 
 | Ciclo | Período | Entregas |
@@ -122,8 +136,8 @@ Principais tabelas:
 - **Python 3.11+**
 - **Streamlit** — framework de interface web
 - **PostgreSQL / SQLite** — persistência
-- **Pandas** — análise de dados
-- **hashlib / PBKDF2** — armazenamento seguro de senhas
+- **Pandas** — análise e exportação
+- **PBKDF2-HMAC-SHA-256** — armazenamento seguro de senhas
 
 ---
 
