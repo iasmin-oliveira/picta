@@ -139,7 +139,7 @@ def criar_participante(
 
     participante_id = uuid.uuid4().hex
     executar(
-        "INSERT INTO Pesquisa_Participantes(" 
+        "INSERT INTO Pesquisa_Participantes("
         "id, estudo_id, codigo_participante, faixa_etaria, consentimento_confirmado, criado_por_usuario_id) "
         "VALUES(?,?,?,?,?,?)",
         (participante_id, estudo_id, codigo, faixa_etaria, 1, operador),
@@ -225,13 +225,20 @@ def finalizar_sessao(sessao_id: str, concluida: bool, solicitou_ajuda: bool) -> 
     if not operador or not sessao_id:
         return False
     _garantir_schema()
-    atualizada = executar(
+    sessao = executar(
+        "SELECT id FROM Pesquisa_Sessoes WHERE id = ? AND operador_usuario_id = ? AND fim IS NULL",
+        (sessao_id, operador),
+        fetchone=True,
+    )
+    if not sessao:
+        return False
+    executar(
         "UPDATE Pesquisa_Sessoes SET fim = ?, concluida = ?, solicitou_ajuda = ? "
         "WHERE id = ? AND operador_usuario_id = ? AND fim IS NULL",
         (_agora_sql(), int(bool(concluida)), int(bool(solicitou_ajuda)), sessao_id, operador),
         commit=True,
     )
-    return atualizada is None
+    return True
 
 
 def obter_metricas() -> list[dict[str, Any]]:
