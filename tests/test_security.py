@@ -146,10 +146,12 @@ def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "streamlit", fake_st)
 
     assert auth.criar_usuario("Cuidador A", "cuidador_a", "senha123", "cuidador") is None
+    assert auth.criar_usuario("Cuidador B", "cuidador_b", "senha123", "cuidador") is None
     assert auth.criar_usuario("Crianca A", "crianca_a", "senha123", "crianca") is None
     assert auth.criar_usuario("Crianca B", "crianca_b", "senha123", "crianca") is None
     assert auth.criar_usuario("Profissional", "prof", "senha123", "profissional") is None
     caregiver = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("cuidador_a",), fetchone=True)["id"]
+    caregiver_b = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("cuidador_b",), fetchone=True)["id"]
     child_a_user = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("crianca_a",), fetchone=True)["id"]
     child_b_user = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("crianca_b",), fetchone=True)["id"]
     professional = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("prof",), fetchone=True)["id"]
@@ -162,6 +164,12 @@ def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
     session_state.update(autenticado=True, usuario={"id": caregiver, "perfil": "cuidador"})
     assert security.usuario_pode_acessar_crianca(caregiver, "cuidador", child_a)
     assert not security.usuario_pode_acessar_crianca(caregiver, "cuidador", child_b)
+    assert auth.vincular_crianca_responsavel(caregiver_b, "crianca_a") == "Sessao invalida. Faca login novamente."
+    session_state.update(autenticado=True, usuario={"id": caregiver_b, "perfil": "cuidador"})
+    assert auth.vincular_crianca_responsavel(caregiver_b, "crianca_a") == "Esta crianca ja esta vinculada a outro responsavel."
+    assert db.executar("SELECT cuidador_id FROM Criancas WHERE id = ?", (child_a,), fetchone=True)["cuidador_id"] == caregiver
+
+    session_state.update(autenticado=True, usuario={"id": caregiver, "perfil": "cuidador"})
     assert logs.registar_interacao(child_a, picto)
     assert not logs.registar_interacao(child_b, picto)
     assert len(logs.obter_interacoes(child_a)) == 1
@@ -170,7 +178,7 @@ def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
     session_state.update(autenticado=True, usuario={"id": professional, "perfil": "profissional"})
     assert logs.obter_interacoes(child_a)
     assert logs.obter_interacoes(child_b) == []
-    assert not auth.vincular_crianca_responsavel(professional, "crianca_b")
+    assert auth.vincular_crianca_responsavel(professional, "crianca_b") == "Perfil sem permissao para vincular criancas."
 
 
 def test_user_controlled_values_are_escaped_before_raw_html():
