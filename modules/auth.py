@@ -136,11 +136,16 @@ def criar_crianca_para_utilizador(utilizador_id: int, nome: str) -> int:
 
 
 def obter_criancas_do_usuario(usuario_id: int, perfil: str) -> List[dict]:
-    if not usuario_id:
+    from utils.security import exigir_usuario_sessao
+    if not usuario_id or not exigir_usuario_sessao(usuario_id):
         return []
-    if perfil in ("responsavel", "cuidador"):
+    perfil_db = executar("SELECT perfil FROM Utilizadores WHERE id = ?", (usuario_id,), fetchone=True)
+    perfil_real = str((perfil_db or {}).get("perfil") or "")
+    if perfil_real != perfil:
+        return []
+    if perfil_real in ("responsavel", "cuidador"):
         return executar("SELECT id, nome, data_nascimento FROM Criancas WHERE cuidador_id = ? ORDER BY nome", (usuario_id,), fetchall=True) or []
-    if perfil == "profissional":
+    if perfil_real == "profissional":
         return executar("SELECT c.id, c.nome, c.data_nascimento FROM Criancas c JOIN Vinculos v ON v.crianca_id = c.id WHERE v.usuario_id = ? ORDER BY c.nome", (usuario_id,), fetchall=True) or []
     return []
 
@@ -149,6 +154,9 @@ def vincular_crianca_responsavel(responsavel_id: int, crianca_username: str) -> 
     from utils.security import exigir_usuario_sessao
     if not responsavel_id or not exigir_usuario_sessao(responsavel_id):
         return "Sessao invalida. Faca login novamente."
+    resp = executar("SELECT perfil FROM Utilizadores WHERE id = ?", (responsavel_id,), fetchone=True)
+    if str((resp or {}).get("perfil") or "") not in {"responsavel", "cuidador"}:
+        return "Perfil sem permissao para vincular criancas."
     crianca_user = executar("SELECT id, nome, perfil FROM Utilizadores WHERE username = ?", (crianca_username.strip().lower(),), fetchone=True)
     if not crianca_user:
         return "Utilizador nao encontrado."
@@ -278,22 +286,20 @@ def obter_crianca_por_id(crianca_id: int, usuario_id: Optional[int] = None, perf
     from utils.security import usuario_pode_acessar_crianca
     if not usuario_pode_acessar_crianca(usuario_id, perfil, crianca_id):
         return None
-    return executar("SELECT id, nome, data_nascimento FROM Criancas WHERE id = ?", (crianca_id,), fetchone=True)
+    return executar("SELECT id, nome, data_nascimento, cuidador_id, utilizador_id FROM Criancas WHERE id = ?", (crianca_id,), fetchone=True)
 
 
 def listar_profissionais_da_crianca(crianca_id: int) -> List[dict]:
-    if not crianca_id:
-        return []
     from utils.security import exigir_acesso_crianca
     if not exigir_acesso_crianca(crianca_id):
         return []
-    return executar("SELECT u.id, u.nome, u.username FROM Utilizadores u JOIN Vinculos v ON v.usuario_id = u.id WHERE v.crianca_id = ? AND u.perfil = 'profissional' ORDER BY u.nome", (crianca_id,), fetchall=True) or []
+    return executar("SELECT u.id, u.nome, u.username FROM Utilizadores u JOIN Vinculos v ON v.usuario_id = u.id WHERE v.crianca_id = ? ORDER BY u.nome", (crianca_id,), fetchall=True) or []
 
 
 def _parse_datetime(value) -> Optional[datetime]:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(str(value))
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     except (TypeError, ValueError):
         return None
