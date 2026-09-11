@@ -21,7 +21,11 @@ def _current_user() -> Optional[dict]:
 
 
 def usuario_pode_acessar_crianca(usuario_id: int, perfil: str, crianca_id: int) -> bool:
+    """Authorize a child access using the user's persisted profile and ownership/link."""
     if not usuario_id or not crianca_id or perfil not in ALLOWED_PROFILES:
+        return False
+    user = executar("SELECT perfil FROM Utilizadores WHERE id = ?", (usuario_id,), fetchone=True)
+    if not user or str(user.get("perfil") or "") != perfil:
         return False
     row = executar("SELECT utilizador_id, cuidador_id FROM Criancas WHERE id = ?", (crianca_id,), fetchone=True)
     if not row:
