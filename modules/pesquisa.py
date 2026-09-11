@@ -57,21 +57,21 @@ def _garantir_schema() -> None:
     ddl = (
         "CREATE TABLE IF NOT EXISTS Pesquisa_Estudos ("
         "id TEXT PRIMARY KEY, codigo TEXT UNIQUE NOT NULL, nome TEXT NOT NULL, "
-        "ativo INTEGER DEFAULT 1, criado_em DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "ativo INTEGER DEFAULT 1, criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS Pesquisa_Participantes ("
         "id TEXT PRIMARY KEY, estudo_id TEXT NOT NULL REFERENCES Pesquisa_Estudos(id) ON DELETE CASCADE, "
         "codigo_participante TEXT NOT NULL, faixa_etaria TEXT NOT NULL, "
         "consentimento_confirmado INTEGER NOT NULL DEFAULT 0, criado_por_usuario_id INTEGER NOT NULL REFERENCES Utilizadores(id), "
-        "criado_em DATETIME DEFAULT CURRENT_TIMESTAMP, ativo INTEGER DEFAULT 1, "
+        "criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ativo INTEGER DEFAULT 1, "
         "UNIQUE(estudo_id, codigo_participante))",
         "CREATE TABLE IF NOT EXISTS Pesquisa_Sessoes ("
         "id TEXT PRIMARY KEY, participante_id TEXT NOT NULL REFERENCES Pesquisa_Participantes(id) ON DELETE CASCADE, "
         "operador_usuario_id INTEGER NOT NULL REFERENCES Utilizadores(id), tarefa TEXT NOT NULL, "
-        "inicio DATETIME NOT NULL, fim DATETIME, concluida INTEGER DEFAULT 0, solicitou_ajuda INTEGER DEFAULT 0)",
+        "inicio TIMESTAMP NOT NULL, fim TIMESTAMP, concluida INTEGER DEFAULT 0, solicitou_ajuda INTEGER DEFAULT 0)",
         "CREATE TABLE IF NOT EXISTS Pesquisa_Interacoes ("
         "id TEXT PRIMARY KEY, sessao_id TEXT NOT NULL REFERENCES Pesquisa_Sessoes(id) ON DELETE CASCADE, "
         "pictograma_id INTEGER NOT NULL REFERENCES Pictogramas(id), ordem INTEGER NOT NULL, "
-        "criado_em DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        "criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS idx_pesquisa_participante_operador "
         "ON Pesquisa_Participantes(criado_por_usuario_id, ativo)",
         "CREATE INDEX IF NOT EXISTS idx_pesquisa_sessoes_participante "
