@@ -3,6 +3,7 @@ PICTA — views/dashboard_profissional/_perfil.py
 Seção "Meu Perfil" do dashboard profissional.
 """
 
+import html
 import streamlit as st
 
 from modules.auth import obter_usuario_por_id, atualizar_usuario
@@ -12,16 +13,17 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
     st.markdown(
         '<div class="page-header">'
         '  <div class="page-title">👤 Meu Perfil</div>'
-        '  <div class="page-subtitle">'
-        '    Atualize seu nome de exibição, nome de usuário e senha.</div>'
-        '</div>',
-        unsafe_allow_html=True,
+        '  <div class="page-subtitle">Atualize seu nome de exibição, nome de usuário e senha.</div>'
+        '</div>', unsafe_allow_html=True,
     )
 
-    usuario_db     = obter_usuario_por_id(usuario_id)
-    nome_atual     = usuario_db.get('nome', nome)   if usuario_db else nome
+    usuario_db = obter_usuario_por_id(usuario_id)
+    nome_atual = usuario_db.get('nome', nome) if usuario_db else nome
     username_atual = usuario_db.get('username', '') if usuario_db else ''
-    email_atual    = usuario_db.get('email', '')    if usuario_db else ''
+    email_atual = usuario_db.get('email', '') if usuario_db else ''
+    nome_html = html.escape(str(nome_atual), quote=True)
+    username_html = html.escape(str(username_atual), quote=True)
+    iniciais_html = html.escape(str(iniciais), quote=True)
 
     col_card, col_form = st.columns([1, 1])
 
@@ -29,59 +31,39 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
         st.markdown(
             f'<div class="glass-card" style="text-align:center;padding:2rem">'
             f'  <div style="display:flex;justify-content:center;margin-bottom:1.2rem">'
-            f'    <div class="profile-avatar-xl">{iniciais}</div>'
+            f'    <div class="profile-avatar-xl">{iniciais_html}</div>'
             f'  </div>'
-            f'  <div class="profile-name-big">{nome_atual}</div>'
-            f'  <div style="margin-top:.4rem">'
-            f'    <span class="profile-role-badge">👩‍⚕️ Profissional de Saúde</span>'
-            f'  </div>'
+            f'  <div class="profile-name-big">{nome_html}</div>'
+            f'  <div style="margin-top:.4rem"><span class="profile-role-badge">👩‍⚕️ Profissional de Saúde</span></div>'
             f'  <div class="ficha-row" style="margin-top:1.2rem">'
             f'    <span class="ficha-label">Nome de usuário</span>'
-            f'    <span class="ficha-valor">@{username_atual}</span>'
+            f'    <span class="ficha-valor">@{username_html}</span>'
             f'  </div>'
-            f'  <div class="ficha-row">'
-            f'    <span class="ficha-label">Tipo de conta</span>'
-            f'    <span class="ficha-valor">Profissional</span>'
-            f'  </div>'
+            f'  <div class="ficha-row"><span class="ficha-label">Tipo de conta</span><span class="ficha-valor">Profissional</span></div>'
             f'</div>'
             f'<div class="glass-card" style="padding:1rem 1.2rem;margin-top:.8rem">'
             f'  <div class="sec-header" style="margin-bottom:.5rem">🔒 Segurança</div>'
             f'  <div style="font-size:.82rem;color:#4b5563;font-weight:600;line-height:1.6">'
-            f'    Senha armazenada de forma criptografada. '
-            f'    Nunca compartilhe com colegas ou pacientes. '
-            f'    Use pelo menos 6 caracteres.'
+            f'    Senha armazenada de forma criptografada. Nunca compartilhe com colegas ou pacientes. Use pelo menos 6 caracteres.'
             f'  </div>'
-            f'</div>',
-            unsafe_allow_html=True,
+            f'</div>', unsafe_allow_html=True,
         )
 
     with col_form:
-        st.markdown(
-            '<div class="sec-header">✏️ Editar informações</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="sec-header">✏️ Editar informações</div>', unsafe_allow_html=True)
         with st.form("form_perfil_prof"):
-            novo_nome     = st.text_input("Nome completo", value=nome_atual)
-            novo_username = st.text_input(
-                "Nome de usuário", value=username_atual,
-                help="Letras, números e ponto. Ex: dra.marina",
-            )
+            novo_nome = st.text_input("Nome completo", value=nome_atual)
+            novo_username = st.text_input("Nome de usuário", value=username_atual, help="Letras, números e ponto. Ex: dra.marina")
             st.caption("🔑 Alterar senha — deixe em branco para manter a atual")
             novo_email = st.text_input("Email de recuperacao", value=email_atual or "")
-            nova_senha = st.text_input("Nova senha", type="password",
-                                       placeholder="Mínimo 6 caracteres")
+            nova_senha = st.text_input("Nova senha", type="password", placeholder="Mínimo 6 caracteres")
             conf_senha = st.text_input("Confirmar nova senha", type="password")
 
-            if st.form_submit_button("💾 Salvar alterações",
-                                     use_container_width=True, type="primary"):
+            if st.form_submit_button("💾 Salvar alterações", use_container_width=True, type="primary"):
                 if nova_senha and nova_senha != conf_senha:
                     st.error("❌ As senhas não coincidem.")
                 else:
-                    erro = atualizar_usuario(
-                        usuario_id, novo_nome, novo_username,
-                        nova_senha if nova_senha else "",
-                        email=novo_email,
-                    )
+                    erro = atualizar_usuario(usuario_id, novo_nome, novo_username, nova_senha if nova_senha else "", email=novo_email)
                     if erro:
                         st.error(f"❌ {erro}")
                     else:
