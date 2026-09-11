@@ -228,6 +228,16 @@ def test_real_postgres_authz_and_log_isolation():
     assert len(logs.obter_interacoes(child_id)) == 1
 
 
+def test_authentication_token_is_not_client_cookie_based():
+    source = Path("controllers/auth_controller.py").read_text(encoding="utf-8")
+    requirements = Path("requirements.txt").read_text(encoding="utf-8")
+    assert "document.cookie" not in source
+    assert "components.html" not in source
+    assert "streamlit-cookies-controller" not in requirements
+    assert "st.context.cookies" not in source
+    assert "st.session_state[\"token\"]" in source
+
+
 def test_user_controlled_values_are_escaped_before_raw_html():
     files = [
         "views/dashboard_cuidador/_crianca.py",
