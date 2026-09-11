@@ -2,7 +2,7 @@ name: Security Tests
 
 on:
   push:
-    branches: [main, security-hardening-2026-09]
+    branches: [main, security-hardening-2026-09, research-readiness-2026-09]
   pull_request:
     branches: [main]
 
@@ -43,5 +43,5 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r requirements.txt pytest
-      - name: Run PostgreSQL authorization integration test
-        run: PYTHONPATH=. pytest -q tests/test_security.py -k postgres
+      - name: Run PostgreSQL integration tests
+        run: PYTHONPATH=. pytest -q tests -k postgres
