@@ -1,7 +1,10 @@
 import hashlib
-import sqlite3
+import os
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import pytest
 
 
 def test_password_hash_is_salted_and_verifies():
@@ -179,6 +182,50 @@ def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
     assert logs.obter_interacoes(child_a)
     assert logs.obter_interacoes(child_b) == []
     assert auth.vincular_crianca_responsavel(professional, "crianca_b") == "Perfil sem permissao para vincular criancas."
+
+
+def test_real_postgres_authz_and_log_isolation():
+    if not os.getenv("DATABASE_URL"):
+        pytest.skip("PostgreSQL de integração não configurado")
+    import sys
+    from database import db
+    from modules import auth, logs
+    from utils import security
+
+    db._INITIALIZED = False
+    db._PG_POOL = None
+    db.inicializar_db()
+    suffix = uuid.uuid4().hex[:10]
+    child_user = f"child_{suffix}"
+    caregiver_user = f"care_{suffix}"
+    other_caregiver_user = f"other_{suffix}"
+    professional_user = f"prof_{suffix}"
+    assert auth.criar_usuario("Crianca PG", child_user, "senha123", "crianca") is None
+    assert auth.criar_usuario("Cuidador PG", caregiver_user, "senha123", "cuidador", f"{caregiver_user}@example.test") is None
+    assert auth.criar_usuario("Outro Cuidador PG", other_caregiver_user, "senha123", "cuidador", f"{other_caregiver_user}@example.test") is None
+    assert auth.criar_usuario("Prof PG", professional_user, "senha123", "profissional", f"{professional_user}@example.test") is None
+    child_uid = db.executar("SELECT id FROM Utilizadores WHERE username = %s", (child_user,), fetchone=True)["id"]
+    caregiver_id = db.executar("SELECT id FROM Utilizadores WHERE username = %s", (caregiver_user,), fetchone=True)["id"]
+    other_caregiver_id = db.executar("SELECT id FROM Utilizadores WHERE username = %s", (other_caregiver_user,), fetchone=True)["id"]
+    professional_id = db.executar("SELECT id FROM Utilizadores WHERE username = %s", (professional_user,), fetchone=True)["id"]
+    child_id = auth.obter_ou_criar_crianca(child_uid, "Crianca PG")
+    db.executar("UPDATE Criancas SET cuidador_id = %s WHERE id = %s", (caregiver_id, child_id), commit=True)
+    picto = db.executar("SELECT id FROM Pictogramas LIMIT 1", fetchone=True)["id"]
+    class SessionState(dict):
+        pass
+    session_state = SessionState(autenticado=True, usuario={"id": caregiver_id, "perfil": "cuidador"})
+    fake_st = type("Streamlit", (), {"session_state": session_state})
+    sys.modules["streamlit"] = fake_st
+    assert security.usuario_pode_acessar_crianca(caregiver_id, "cuidador", child_id)
+    assert not security.usuario_pode_acessar_crianca(other_caregiver_id, "cuidador", child_id)
+    assert logs.registar_interacao(child_id, picto)
+    session_state.update(usuario={"id": other_caregiver_id, "perfil": "cuidador"})
+    assert logs.obter_interacoes(child_id) == []
+    assert not logs.registar_interacao(child_id, picto)
+    session_state.update(usuario={"id": professional_id, "perfil": "profissional"})
+    assert logs.obter_interacoes(child_id) == []
+    db.executar("INSERT INTO Vinculos(usuario_id, crianca_id) VALUES(%s,%s) ON CONFLICT DO NOTHING", (professional_id, child_id), commit=True)
+    assert len(logs.obter_interacoes(child_id)) == 1
 
 
 def test_user_controlled_values_are_escaped_before_raw_html():
