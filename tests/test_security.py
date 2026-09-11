@@ -145,11 +145,11 @@ def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
     fake_st = type("Streamlit", (), {"session_state": session_state})
     monkeypatch.setitem(sys.modules, "streamlit", fake_st)
 
-    assert auth.criar_usuario("Cuidador A", "cuidador_a", "senha123", "cuidador") is None
-    assert auth.criar_usuario("Cuidador B", "cuidador_b", "senha123", "cuidador") is None
+    assert auth.criar_usuario("Cuidador A", "cuidador_a", "senha123", "cuidador", "a@example.test") is None
+    assert auth.criar_usuario("Cuidador B", "cuidador_b", "senha123", "cuidador", "b@example.test") is None
     assert auth.criar_usuario("Crianca A", "crianca_a", "senha123", "crianca") is None
     assert auth.criar_usuario("Crianca B", "crianca_b", "senha123", "crianca") is None
-    assert auth.criar_usuario("Profissional", "prof", "senha123", "profissional") is None
+    assert auth.criar_usuario("Profissional", "prof", "senha123", "profissional", "p@example.test") is None
     caregiver = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("cuidador_a",), fetchone=True)["id"]
     caregiver_b = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("cuidador_b",), fetchone=True)["id"]
     child_a_user = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("crianca_a",), fetchone=True)["id"]
