@@ -127,6 +127,52 @@ def test_sensitive_account_mutation_rejects_foreign_id(monkeypatch):
     assert auth.trocar_senha_obrigatoria(11, "nova123") == "Sessao invalida. Faca login novamente."
 
 
+def test_real_sqlite_authz_and_log_isolation(monkeypatch, tmp_path):
+    import sys
+    from database import db
+    from modules import auth, logs
+    from utils import security
+
+    monkeypatch.setattr(db, "SQLITE_PATH", tmp_path / "picta-test.db")
+    monkeypatch.setattr(db, "_INITIALIZED", False)
+    monkeypatch.setattr(db, "_PG_POOL", None)
+    monkeypatch.setattr(db, "_usar_postgres", lambda: False)
+    db.inicializar_db()
+
+    class SessionState(dict):
+        pass
+    session_state = SessionState()
+    fake_st = type("Streamlit", (), {"session_state": session_state})
+    monkeypatch.setitem(sys.modules, "streamlit", fake_st)
+
+    assert auth.criar_usuario("Cuidador A", "cuidador_a", "senha123", "cuidador") is None
+    assert auth.criar_usuario("Crianca A", "crianca_a", "senha123", "crianca") is None
+    assert auth.criar_usuario("Crianca B", "crianca_b", "senha123", "crianca") is None
+    assert auth.criar_usuario("Profissional", "prof", "senha123", "profissional") is None
+    caregiver = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("cuidador_a",), fetchone=True)["id"]
+    child_a_user = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("crianca_a",), fetchone=True)["id"]
+    child_b_user = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("crianca_b",), fetchone=True)["id"]
+    professional = db.executar("SELECT id FROM Utilizadores WHERE username = ?", ("prof",), fetchone=True)["id"]
+    child_a = auth.obter_ou_criar_crianca(child_a_user, "Crianca A")
+    child_b = auth.obter_ou_criar_crianca(child_b_user, "Crianca B")
+    db.executar("UPDATE Criancas SET cuidador_id = ? WHERE id = ?", (caregiver, child_a), commit=True)
+    db.executar("INSERT INTO Vinculos(usuario_id, crianca_id) VALUES(?,?)", (professional, child_a), commit=True)
+    picto = db.executar("SELECT id FROM Pictogramas LIMIT 1", fetchone=True)["id"]
+
+    session_state.update(autenticado=True, usuario={"id": caregiver, "perfil": "cuidador"})
+    assert security.usuario_pode_acessar_crianca(caregiver, "cuidador", child_a)
+    assert not security.usuario_pode_acessar_crianca(caregiver, "cuidador", child_b)
+    assert logs.registar_interacao(child_a, picto)
+    assert not logs.registar_interacao(child_b, picto)
+    assert len(logs.obter_interacoes(child_a)) == 1
+    assert logs.obter_interacoes(child_b) == []
+
+    session_state.update(autenticado=True, usuario={"id": professional, "perfil": "profissional"})
+    assert logs.obter_interacoes(child_a)
+    assert logs.obter_interacoes(child_b) == []
+    assert not auth.vincular_crianca_responsavel(professional, "crianca_b")
+
+
 def test_user_controlled_values_are_escaped_before_raw_html():
     files = [
         "views/dashboard_cuidador/_crianca.py",
