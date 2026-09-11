@@ -235,7 +235,8 @@ def test_authentication_token_is_not_client_cookie_based():
     assert "components.html" not in source
     assert "streamlit-cookies-controller" not in requirements
     assert "st.context.cookies" not in source
-    assert "st.session_state[\"token\"]" in source
+    assert 'st.session_state.get("token")' in source
+    assert '"token": token' in source
 
 
 def test_user_controlled_values_are_escaped_before_raw_html():
