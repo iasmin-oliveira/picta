@@ -14,6 +14,7 @@ from ._painel import render_painel
 from ._pacientes import render_pacientes
 from ._insights import render_insights
 from ._exportacao import render_exportacao
+from ._pesquisa import render as render_pesquisa
 from ._perfil import render_perfil
 
 
@@ -107,6 +108,10 @@ def render() -> None:
 
     if pag == 'perfil':
         render_perfil(usuario_id, nome, iniciais)
+        return
+
+    if pag == 'pesquisa':
+        render_pesquisa()
         return
 
     if pag == 'pacientes':
