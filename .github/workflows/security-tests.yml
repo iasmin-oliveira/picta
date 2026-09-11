@@ -16,5 +16,5 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r requirements.txt pytest
-      - name: Run security tests
-        run: PYTHONPATH=. pytest -q tests/test_security.py
+      - name: Run complete test suite
+        run: PYTHONPATH=. pytest -q tests
