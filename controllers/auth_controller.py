@@ -1,14 +1,16 @@
 """
 PICTA — controllers/auth_controller.py
-Sessão persistente via cookie + banco de dados.
+Sessão de autenticação mantida no estado de sessão do Streamlit + banco de dados.
+
+O token de autenticação do PICTA não é mais colocado em um cookie criado por
+JavaScript. Isso evita expor o token ao JavaScript da página e elimina a
+limitação de não conseguir marcar esse cookie como HttpOnly.
 """
 
-import threading
 import time
 from typing import Optional
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from modules.auth import (
     autenticar_usuario,
@@ -20,76 +22,31 @@ from modules.auth import (
     validar_sessao,
 )
 
-COOKIE_NAME = "picta_session"
-COOKIE_MAX_AGE = 30 * 60
 SESSION_RENEW_INTERVAL_SECONDS = 60
 
 
-def _cookie_attributes() -> str:
-    try:
-        url = str(st.context.url or "")
-        secure = " Secure;" if url.lower().startswith("https://") else ""
-    except Exception:
-        secure = ""
-    return f"path=/;{secure} SameSite=Strict"
-
-
-def _executar_sessao_em_background(nome: str, func, *args) -> None:
-    def worker() -> None:
-        try:
-            func(*args)
-        except Exception:
-            pass
-    threading.Thread(target=worker, name=nome, daemon=True).start()
-
-
-def _ler_cookie() -> Optional[str]:
-    try:
-        return st.context.cookies.get(COOKIE_NAME)
-    except Exception:
-        return None
-
-
-def _escrever_cookie_neste_render(token: str) -> None:
-    components.html(
-        f"<script>window.parent.document.cookie = "
-        f"'{COOKIE_NAME}={token}; max-age={COOKIE_MAX_AGE}; {_cookie_attributes()}';</script>",
-        height=1,
-    )
-
-
-def _apagar_cookie() -> None:
-    components.html(
-        f"<script>window.parent.document.cookie = "
-        f"'{COOKIE_NAME}=; max-age=0; {_cookie_attributes()}';</script>",
-        height=1,
-    )
-
-
 def processar_cookie_pendente() -> None:
-    if st.session_state.pop("_pending_cookie_delete", False):
-        _apagar_cookie()
-        st.session_state["_sessao_verificada"] = True
-        return
-    token = st.session_state.pop("_pending_cookie", None)
-    if token:
-        _escrever_cookie_neste_render(token)
+    """Compatibilidade com chamadas existentes; não há cookie de autenticação."""
+    st.session_state.pop("_pending_cookie", None)
+    st.session_state.pop("_pending_cookie_delete", None)
 
 
 def _encerrar_sessao_local() -> None:
     st.session_state.clear()
-    st.session_state["_pending_cookie_delete"] = True
     st.session_state["_sessao_verificada"] = True
 
 
 def is_authenticated() -> bool:
+    """Valida a sessão exclusivamente pelo token mantido no session_state."""
     if st.session_state.get("autenticado"):
         token = st.session_state.get("token")
         agora = time.time()
         ultima = st.session_state.get("_ultima_verificacao_sessao", 0)
+
         if not token:
             _encerrar_sessao_local()
             return False
+
         if agora - ultima >= SESSION_RENEW_INTERVAL_SECONDS:
             usuario = validar_sessao(token)
             st.session_state["_ultima_verificacao_sessao"] = agora
@@ -97,26 +54,16 @@ def is_authenticated() -> bool:
                 _encerrar_sessao_local()
                 return False
             st.session_state["usuario"] = usuario
-            _executar_sessao_em_background("picta-renovar-sessao", renovar_sessao, token)
+            renovar_sessao(token)
+
         return True
 
     if st.session_state.get("_sessao_verificada"):
         return False
+
+    # Não recuperamos autenticação por cookie próprio. O token só existe no
+    # estado de sessão do servidor para esta sessão do Streamlit.
     st.session_state["_sessao_verificada"] = True
-    token = _ler_cookie()
-    if not token:
-        return False
-    usuario = validar_sessao(token)
-    if usuario:
-        st.session_state.update({
-            "autenticado": True,
-            "usuario": usuario,
-            "token": token,
-            "_pending_cookie": token,
-            "_ultima_verificacao_sessao": time.time(),
-        })
-        return True
-    _apagar_cookie()
     return False
 
 
@@ -158,7 +105,6 @@ def login() -> None:
         "usuario": user,
         "token": token,
         "_sessao_verificada": True,
-        "_pending_cookie": token,
         "_ultima_verificacao_sessao": time.time(),
     })
     st.rerun()
@@ -196,7 +142,7 @@ def render_troca_senha_obrigatoria() -> None:
 
 
 def logout() -> None:
-    token = st.session_state.get("token")
+    token: Optional[str] = st.session_state.get("token")
     if token:
         try:
             revogar_sessao(token)
