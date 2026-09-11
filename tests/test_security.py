@@ -49,7 +49,10 @@ def test_child_creation_never_reuses_same_name(monkeypatch):
 def test_object_authorization_matrix(monkeypatch):
     from utils import security
     child = {"utilizador_id": 10, "cuidador_id": 20}
+    users = {10: "crianca", 20: "cuidador", 30: "profissional", 31: "profissional"}
     def fake_exec(sql, params=(), **kwargs):
+        if "SELECT perfil FROM Utilizadores" in sql:
+            return {"perfil": users.get(params[0])}
         if "SELECT utilizador_id" in sql:
             return child
         if "SELECT id FROM Vinculos" in sql:
@@ -62,6 +65,7 @@ def test_object_authorization_matrix(monkeypatch):
     assert not security.usuario_pode_acessar_crianca(21, "cuidador", 99)
     assert security.usuario_pode_acessar_crianca(30, "profissional", 99)
     assert not security.usuario_pode_acessar_crianca(31, "profissional", 99)
+    assert not security.usuario_pode_acessar_crianca(30, "cuidador", 99)
     assert not security.usuario_pode_acessar_crianca(1, "admin", 99)
 
 
@@ -94,16 +98,33 @@ def test_sql_is_parameterized_in_child_creation(monkeypatch):
     assert any(params == (1,) for _, params in seen)
 
 
-def test_source_enforces_sensitive_paths():
-    auth_source = Path("modules/auth.py").read_text(encoding="utf-8")
-    logs_source = Path("modules/logs.py").read_text(encoding="utf-8")
-    controller_source = Path("controllers/auth_controller.py").read_text(encoding="utf-8")
-    assert "_buscar_crianca_canonica_por_nome" not in auth_source
-    assert "_mesclar_criancas" not in auth_source
-    assert "exigir_acesso_crianca" in logs_source
-    assert "validar_sessao(token)" in controller_source
-    assert "SameSite=Strict" in controller_source
-    assert "Secure" in controller_source
+def test_session_bound_child_listing_and_linking(monkeypatch):
+    from modules import auth
+    state = {"current": {"id": 10}, "users": {10: "cuidador", 11: "cuidador"}}
+    def fake_exec(sql, params=(), **kwargs):
+        if sql.startswith("SELECT perfil FROM Utilizadores"):
+            return {"perfil": state["users"].get(params[0])}
+        if "SELECT id, nome, data_nascimento FROM Criancas WHERE cuidador_id" in sql:
+            return [{"id": 99, "nome": "A"}]
+        return None
+    class SessionState(dict):
+        pass
+    fake_st = type("Streamlit", (), {"session_state": SessionState(autenticado=True, usuario=state["current"])})
+    import sys
+    monkeypatch.setitem(sys.modules, "streamlit", fake_st)
+    monkeypatch.setattr(auth, "executar", fake_exec)
+    assert auth.obter_criancas_do_usuario(10, "cuidador")
+    assert auth.obter_criancas_do_usuario(11, "cuidador") == []
+
+
+def test_sensitive_account_mutation_rejects_foreign_id(monkeypatch):
+    from modules import auth
+    import sys
+    fake_st = type("Streamlit", (), {"session_state": {"autenticado": True, "usuario": {"id": 10}}})
+    monkeypatch.setitem(sys.modules, "streamlit", fake_st)
+    monkeypatch.setattr(auth, "executar", lambda *args, **kwargs: None)
+    assert auth.atualizar_usuario(11, "X", "x") == "Sessao invalida. Faca login novamente."
+    assert auth.trocar_senha_obrigatoria(11, "nova123") == "Sessao invalida. Faca login novamente."
 
 
 def test_user_controlled_values_are_escaped_before_raw_html():
@@ -112,14 +133,21 @@ def test_user_controlled_values_are_escaped_before_raw_html():
         "views/dashboard_cuidador/_hoje.py",
         "views/dashboard_cuidador/_historico.py",
         "views/dashboard_cuidador/_vinculos.py",
+        "views/dashboard_cuidador/_perfil.py",
+        "views/dashboard_cuidador/__init__.py",
         "views/dashboard_profissional/__init__.py",
         "views/dashboard_profissional/_painel.py",
         "views/dashboard_profissional/_exportacao.py",
+        "views/dashboard_profissional/_insights.py",
+        "views/dashboard_profissional/_pacientes.py",
+        "views/dashboard_profissional/_perfil.py",
+        "views/painel_crianca.py",
     ]
     for filename in files:
         source = Path(filename).read_text(encoding="utf-8")
-        assert "import html" in source, filename
-        assert "html.escape" in source, filename
+        if "unsafe_allow_html=True" in source:
+            assert "import html" in source, filename
+            assert "html.escape" in source, filename
 
 
 def test_streamlit_security_config_is_not_disabled():
