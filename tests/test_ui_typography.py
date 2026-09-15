@@ -22,6 +22,16 @@ def test_global_typography_layer_exists_and_has_accessibility_tokens():
     assert ".pc-picto-name" in css
 
 
+def test_global_typography_layer_has_explicit_responsive_rules():
+    css = (ROOT / "assets" / "picta_typography_accessibility.css").read_text(encoding="utf-8")
+
+    assert "@media (min-width: 721px) and (max-width: 1199px)" in css
+    assert "@media (max-width: 900px)" in css
+    assert "@media (max-width: 560px)" in css
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr)) !important" in css
+    assert "grid-template-columns: 1fr !important" in css
+
+
 def test_css_loader_registers_global_typography_after_screen_css():
     loader = (ROOT / "utils" / "css_loader.py").read_text(encoding="utf-8")
 
