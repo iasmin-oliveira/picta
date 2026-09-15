@@ -34,7 +34,7 @@ def render() -> None:
 
         with st.form("form_cadastro", clear_on_submit=False):
             nome      = st.text_input("👤  Nome completo", placeholder="Ex: Maria Silva")
-            username  = st.text_input("🔑  Nome de utilizador", placeholder="Ex: maria.silva (sem espaços)")
+            username  = st.text_input("🔑  Nome de usuário", placeholder="Ex: maria.silva (sem espaços)")
             senha     = st.text_input("🔒  Senha", type="password", placeholder="Mínimo 6 caracteres")
             confirmar = st.text_input("🔒  Confirmar senha", type="password", placeholder="Repita a senha")
 
@@ -48,9 +48,9 @@ def render() -> None:
             )
             st.caption(PERFIS[perfil][1])
             email = st.text_input(
-                "Email de recuperacao",
+                "E-mail de recuperação",
                 placeholder="voce@email.com",
-                help="Obrigatorio para responsavel e profissional recuperarem a senha.",
+                help="Obrigatório para responsável e profissional recuperarem a senha.",
             )
 
             # Campo de vínculo contextual
@@ -58,16 +58,16 @@ def render() -> None:
             if perfil == 'crianca':
                 st.markdown("---")
                 username_vinculo = st.text_input(
-                    "👨‍👩‍👧  Username do responsável *(opcional)*",
+                    "👨‍👩‍👧  Nome de usuário do responsável *(opcional)*",
                     placeholder="Ex: maria.silva",
                     help="Se informar, sua conta será vinculada ao responsável automaticamente.",
                 )
             elif perfil == 'responsavel':
                 st.markdown("---")
                 username_vinculo = st.text_input(
-                    "🧒  Username da criança *(opcional)*",
+                    "🧒  Nome de usuário da criança *(opcional)*",
                     placeholder="Ex: joao",
-                    help="Se a criança já tiver conta, informe o username para vinculá-la.",
+                    help="Se a criança já tiver conta, informe o nome de usuário para vinculá-la.",
                 )
 
             submitted = st.form_submit_button("✨  Criar conta", use_container_width=True)
@@ -136,9 +136,11 @@ def render() -> None:
                     st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("← Voltar para o login", use_container_width=True, key="btn_voltar"):
-            st.session_state['tela'] = 'login'
-            st.rerun()
+        _, col_voltar, _ = st.columns([1, 1, 1])
+        with col_voltar:
+            if st.button("← Voltar para o login", use_container_width=True, key="btn_voltar"):
+                st.session_state['tela'] = 'login'
+                st.rerun()
 
         st.markdown("""
         <p style="text-align:center;color:#8B7EA8;font-size:0.75rem;margin-top:1rem;">
