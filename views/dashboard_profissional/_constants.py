@@ -24,6 +24,7 @@ NAV = [
     ("pacientes", "👥", "Pacientes",      "Gerencie os pacientes vinculados"),
     ("insights",  "🔬", "Insights IA",   "Análise estatística automática"),
     ("exportar",  "💾", "Exportação",     "Baixar dados em CSV ou PDF"),
+    ("pesquisa",  "🧪", "Coleta TCC",     "Sessões controladas e métricas pseudonimizadas"),
     ("perfil",    "👤", "Meu Perfil",    "Edite seus dados e senha"),
 ]
 

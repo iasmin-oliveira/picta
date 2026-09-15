@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import html
 import io
 
 import pandas as pd
@@ -18,11 +19,12 @@ from utils.formatters import (
 
 
 def render_exportacao(crianca_id, crianca_nome: str) -> None:
+    nome_html = html.escape(str(crianca_nome), quote=True)
     st.markdown(
         f'<div class="page-header">'
         f'  <div class="page-title">💾 Exportação</div>'
         f'  <div class="page-subtitle">'
-        f'    Baixe dados clínicos de <b>{crianca_nome}</b> em CSV ou PDF.</div>'
+        f'    Baixe dados clínicos de <b>{nome_html}</b> em CSV ou PDF.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -70,20 +72,16 @@ def render_exportacao(crianca_id, crianca_nome: str) -> None:
     with col_csv:
         csv = export_df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
         st.download_button(
-            "📥 Baixar CSV",
-            csv,
+            "📥 Baixar CSV", csv,
             f"picta_{nome_base}_{filename_date(d_ini)}_{filename_date(d_fim)}.csv",
-            "text/csv",
-            use_container_width=True,
+            "text/csv", use_container_width=True,
         )
     with col_pdf:
         pdf = _gerar_pdf(df, crianca_nome, d_ini, d_fim)
         st.download_button(
-            "🖨️ Baixar PDF",
-            pdf,
+            "🖨️ Baixar PDF", pdf,
             f"relatorio_{nome_base}_{filename_date(d_ini)}_{filename_date(d_fim)}.pdf",
-            "application/pdf",
-            use_container_width=True,
+            "application/pdf", use_container_width=True,
         )
 
 
@@ -108,45 +106,24 @@ def _gerar_pdf(df: pd.DataFrame, nome: str, d1, d2) -> bytes:
 
         buf = io.BytesIO()
         doc = SimpleDocTemplate(
-            buf,
-            pagesize=A4,
-            rightMargin=2 * cm,
-            leftMargin=2 * cm,
-            topMargin=2 * cm,
-            bottomMargin=2 * cm,
+            buf, pagesize=A4, rightMargin=2 * cm, leftMargin=2 * cm,
+            topMargin=2 * cm, bottomMargin=2 * cm,
         )
         styles = getSampleStyleSheet()
-        tit = ParagraphStyle(
-            "T",
-            parent=styles["Heading1"],
-            fontSize=18,
-            textColor=colors.HexColor("#4338ca"),
-            alignment=TA_CENTER,
-            spaceAfter=6,
-        )
-        sub = ParagraphStyle(
-            "S",
-            parent=styles["Normal"],
-            fontSize=10,
-            textColor=colors.HexColor("#6b7280"),
-            alignment=TA_CENTER,
-            spaceAfter=12,
-        )
-        sec = ParagraphStyle(
-            "Sec",
-            parent=styles["Heading2"],
-            fontSize=13,
-            textColor=colors.HexColor("#1e1b4b"),
-            spaceBefore=14,
-            spaceAfter=6,
-        )
+        tit = ParagraphStyle("T", parent=styles["Heading1"], fontSize=18,
+                             textColor=colors.HexColor("#4338ca"), alignment=TA_CENTER, spaceAfter=6)
+        sub = ParagraphStyle("S", parent=styles["Normal"], fontSize=10,
+                             textColor=colors.HexColor("#6b7280"), alignment=TA_CENTER, spaceAfter=12)
+        sec = ParagraphStyle("Sec", parent=styles["Heading2"], fontSize=13,
+                             textColor=colors.HexColor("#1e1b4b"), spaceBefore=14, spaceAfter=6)
 
+        nome_pdf = html.escape(str(nome), quote=False)
+        periodo_pdf = html.escape(str(format_period_br(d1, d2)), quote=False)
         elems = [
             Paragraph("PICTA - Relatório Clínico", tit),
             Paragraph(
-                f"Paciente: <b>{nome}</b> | Período: {format_period_br(d1, d2)} | "
-                f"Total: <b>{len(df)}</b> registros",
-                sub,
+                f"Paciente: <b>{nome_pdf}</b> | Período: {periodo_pdf} | "
+                f"Total: <b>{len(df)}</b> registros", sub,
             ),
             Spacer(1, 0.5 * cm),
         ]
@@ -154,37 +131,25 @@ def _gerar_pdf(df: pd.DataFrame, nome: str, d1, d2) -> bytes:
         elems.append(Paragraph("Distribuição por Categoria", sec))
         tabela = [["Categoria", "Total", "%"]]
         for _, row in por_cat.iterrows():
-            tabela.append(
-                [
-                    str(row["categoria"]).title(),
-                    str(row["total"]),
-                    f"{100 * row['total'] / len(df):.1f}%",
-                ]
-            )
+            categoria_pdf = html.escape(str(row["categoria"]).title(), quote=False)
+            tabela.append([categoria_pdf, str(row["total"]), f"{100 * row['total'] / len(df):.1f}%"])
         tbl = Table(tabela, colWidths=[6 * cm, 4 * cm, 4 * cm])
-        tbl.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4338ca")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#eef2ff"), colors.white]),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e0e7ff")),
-                    ("ALIGN", (1, 0), (-1, -1), "CENTER"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ]
-            )
-        )
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4338ca")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#eef2ff"), colors.white]),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e0e7ff")),
+            ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ]))
         elems += [tbl, Spacer(1, 0.5 * cm)]
-        elems.append(
-            Paragraph(
-                f"Gerado em: {datetime.datetime.now(APP_TZ).strftime('%d/%m/%Y às %H:%M')} "
-                "- PICTA - FACCAT 2026 - Apenas suporte clínico.",
-                sub,
-            )
-        )
+        elems.append(Paragraph(
+            f"Gerado em: {datetime.datetime.now(APP_TZ).strftime('%d/%m/%Y às %H:%M')} "
+            "- PICTA - FACCAT 2026 - Apenas suporte clínico.", sub,
+        ))
         doc.build(elems)
         return buf.getvalue()
     except ImportError:

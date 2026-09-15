@@ -4,6 +4,7 @@ Seção "Pacientes" do dashboard profissional.
 """
 
 import datetime
+import html
 import streamlit as st
 
 from modules.logs import APP_TZ, obter_interacoes
@@ -43,9 +44,9 @@ def render_pacientes(criancas) -> None:
     hoje = datetime.datetime.now(APP_TZ).date()
     for i in range(0, len(criancas), 3):
         grupo = criancas[i:i + 3]
-        cols  = st.columns(len(grupo))
+        cols = st.columns(len(grupo))
         for col, c in zip(cols, grupo):
-            interacs    = obter_interacoes(c['id'], limite=1)
+            interacs = obter_interacoes(c['id'], limite=1)
             ultima_data = (
                 str(interacs[0].get('registado_em', ''))[:10] if interacs else None
             )
@@ -57,11 +58,13 @@ def render_pacientes(criancas) -> None:
             except Exception:
                 ativo = False
 
-            grad       = _GRADS[criancas.index(c) % len(_GRADS)]
-            initials   = ''.join(p[0].upper() for p in c['nome'].split()[:2])
+            grad = html.escape(str(_GRADS[criancas.index(c) % len(_GRADS)]), quote=True)
+            nome_html = html.escape(str(c.get('nome', '')), quote=True)
+            initials = ''.join(p[0].upper() for p in str(c.get('nome', '')).split()[:2])
+            initials_html = html.escape(initials, quote=True)
             status_cls = "status-green" if ativo else "status-orange"
             status_lbl = "ATIVO" if ativo else "INATIVO"
-            sub_txt    = "Ativo nos últimos 7 dias" if ativo else "Sem atividade recente"
+            sub_txt = "Ativo nos últimos 7 dias" if ativo else "Sem atividade recente"
 
             with col:
                 st.markdown(
@@ -74,9 +77,9 @@ def render_pacientes(criancas) -> None:
                     f'      <span style="font-size:1.4rem;font-weight:800;'
                     f'      background:linear-gradient(135deg,#4f46e5,#8b5cf6);'
                     f'      -webkit-background-clip:text;-webkit-text-fill-color:transparent">'
-                    f'      {initials}</span>'
+                    f'      {initials_html}</span>'
                     f'    </div>'
-                    f'    <div class="patient-card-name">{c["nome"]}</div>'
+                    f'    <div class="patient-card-name">{nome_html}</div>'
                     f'    <div class="patient-card-sub" style="color:#6366f1">{sub_txt}</div>'
                     f'  </div>'
                     f'</div>',

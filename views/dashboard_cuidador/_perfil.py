@@ -3,6 +3,7 @@ PICTA — views/dashboard_cuidador/_perfil.py
 Seção "Meu Perfil" do dashboard do cuidador.
 """
 
+import html
 import streamlit as st
 
 from modules.auth import (
@@ -23,12 +24,16 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
         unsafe_allow_html=True,
     )
 
-    usuario_db     = obter_usuario_por_id(usuario_id)
-    nome_atual     = usuario_db.get('nome', nome)   if usuario_db else nome
+    usuario_db = obter_usuario_por_id(usuario_id)
+    nome_atual = usuario_db.get('nome', nome) if usuario_db else nome
     username_atual = usuario_db.get('username', '') if usuario_db else ''
-    email_atual    = usuario_db.get('email', '')    if usuario_db else ''
-    iniciais       = ''.join(p[0].upper() for p in nome.split()[:2])
-    perfil         = st.session_state.get('usuario', {}).get('perfil', 'responsavel')
+    email_atual = usuario_db.get('email', '') if usuario_db else ''
+    iniciais = ''.join(p[0].upper() for p in nome.split()[:2])
+    perfil = st.session_state.get('usuario', {}).get('perfil', 'responsavel')
+    nome_atual_html = html.escape(str(nome_atual), quote=True)
+    username_atual_html = html.escape(str(username_atual), quote=True)
+    iniciais_html = html.escape(str(iniciais), quote=True)
+    label_html = html.escape(str(label), quote=True)
 
     col_card, col_form = st.columns([1, 1])
 
@@ -36,36 +41,30 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
         st.markdown(
             f'<div class="glass-card" style="text-align:center;padding:2rem;">'
             f'  <div style="display:flex;justify-content:center;margin-bottom:1.2rem">'
-            f'    <div class="profile-avatar-xl">{iniciais}</div>'
+            f'    <div class="profile-avatar-xl">{iniciais_html}</div>'
             f'  </div>'
-            f'  <div class="profile-name-big">{nome_atual}</div>'
-            f'  <div style="margin-top:.4rem">'
-            f'    <span class="profile-role-badge">👨‍👩‍👧 {label}</span>'
-            f'  </div>'
+            f'  <div class="profile-name-big">{nome_atual_html}</div>'
+            f'  <div style="margin-top:.4rem"><span class="profile-role-badge">👨‍👩‍👧 {label_html}</span></div>'
             f'  <div class="ficha-row" style="margin-top:1.2rem">'
             f'    <span class="ficha-label">Nome de usuário</span>'
-            f'    <span class="ficha-valor">@{username_atual}</span>'
+            f'    <span class="ficha-valor">@{username_atual_html}</span>'
             f'  </div>'
-            f'</div>',
-            unsafe_allow_html=True,
+            f'</div>', unsafe_allow_html=True,
         )
         st.markdown(
             '<div class="glass-card" style="padding:1rem 1.2rem;">'
             '  <div class="sec-header" style="margin-bottom:.5rem">🔒 Segurança da conta</div>'
             '  <div style="font-size:.82rem;color:#4b5563;font-weight:600;line-height:1.6">'
-            '    Sua senha é armazenada de forma criptografada. '
-            '    Nunca a compartilhe. '
+            '    Sua senha é armazenada de forma criptografada. Nunca a compartilhe. '
             '    Use pelo menos 6 caracteres combinando letras e números.'
             '  </div>'
-            '</div>',
-            unsafe_allow_html=True,
+            '</div>', unsafe_allow_html=True,
         )
 
     with col_form:
-        st.markdown('<div class="sec-header">✏️ Editar informações</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="sec-header">✏️ Editar informações</div>', unsafe_allow_html=True)
         with st.form("form_perfil_cuidador"):
-            novo_nome     = st.text_input("Nome completo", value=nome_atual)
+            novo_nome = st.text_input("Nome completo", value=nome_atual)
             novo_username = st.text_input("Nome de usuário", value=username_atual,
                                           help="Letras, números e ponto. Ex: maria.silva")
             novo_email = st.text_input("Email de recuperacao", value=email_atual or "")
@@ -74,22 +73,15 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
                 'font-weight:600">🔑 Alterar senha — deixe em branco para manter a atual</div>',
                 unsafe_allow_html=True,
             )
-            nova_senha = st.text_input("Nova senha", type="password",
-                                       placeholder="Mínimo 6 caracteres")
+            nova_senha = st.text_input("Nova senha", type="password", placeholder="Mínimo 6 caracteres")
             conf_senha = st.text_input("Confirmar nova senha", type="password")
 
-            if st.form_submit_button("💾 Salvar alterações", use_container_width=True,
-                                     type="primary"):
+            if st.form_submit_button("💾 Salvar alterações", use_container_width=True, type="primary"):
                 if nova_senha and nova_senha != conf_senha:
                     st.error("❌ As senhas não coincidem.")
                 else:
-                    erro = atualizar_usuario(
-                        usuario_id,
-                        novo_nome,
-                        novo_username,
-                        nova_senha if nova_senha else "",
-                        email=novo_email,
-                    )
+                    erro = atualizar_usuario(usuario_id, novo_nome, novo_username,
+                                             nova_senha if nova_senha else "", email=novo_email)
                     if erro:
                         st.error(f"❌ {erro}")
                     else:
@@ -99,29 +91,17 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
 
     criancas = obter_criancas_do_usuario(usuario_id, perfil)
     if criancas:
-        st.markdown(
-            '<div class="sec-header" style="margin-top:1rem">'
-            'Senha da crianca</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="sec-header" style="margin-top:1rem">Senha da crianca</div>', unsafe_allow_html=True)
         with st.form("form_senha_crianca"):
             opcoes = {f"{c['nome']}": c['id'] for c in criancas}
             crianca_nome = st.selectbox("Crianca", list(opcoes.keys()))
-            senha_crianca = st.text_input(
-                "Nova senha da crianca",
-                type="password",
-                placeholder="Minimo 6 caracteres",
-            )
+            senha_crianca = st.text_input("Nova senha da crianca", type="password", placeholder="Minimo 6 caracteres")
             conf_crianca = st.text_input("Confirmar senha da crianca", type="password")
             if st.form_submit_button("Atualizar senha da crianca", use_container_width=True):
                 if senha_crianca != conf_crianca:
                     st.error("As senhas nao coincidem.")
                 else:
-                    erro = atualizar_senha_crianca_responsavel(
-                        usuario_id,
-                        opcoes[crianca_nome],
-                        senha_crianca,
-                    )
+                    erro = atualizar_senha_crianca_responsavel(usuario_id, opcoes[crianca_nome], senha_crianca)
                     if erro:
                         st.error(erro)
                     else:

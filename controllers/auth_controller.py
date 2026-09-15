@@ -1,19 +1,17 @@
 """
 PICTA — controllers/auth_controller.py
-Sessão persistente via cookie + banco de dados.
+Sessão de autenticação mantida no estado de sessão do Streamlit + banco de dados.
 
-Padrão de escrita de cookie:
-  st.rerun() aborta o render atual ANTES do JS do components.html executar.
-  Solução: gravar o token em session_state['_pending_cookie'] e escrever o
-  cookie no início do PRÓXIMO render (antes do routing), quando o render
-  vai até o final e o JS consegue executar no browser.
+O token de autenticação do PICTA não é mais colocado em um cookie criado por
+JavaScript. Isso evita expor o token ao JavaScript da página e elimina a
+limitação de não conseguir marcar esse cookie como HttpOnly.
 """
 
-import threading
 import time
 from typing import Optional
+
 import streamlit as st
-import streamlit.components.v1 as components
+
 from modules.auth import (
     autenticar_usuario,
     criar_sessao,
@@ -24,135 +22,62 @@ from modules.auth import (
     validar_sessao,
 )
 
-COOKIE_NAME    = 'picta_session'
-COOKIE_MAX_AGE = 30 * 60   # 30 minutos em segundos
 SESSION_RENEW_INTERVAL_SECONDS = 60
 
 
-def _executar_sessao_em_background(nome: str, func, *args) -> None:
-    def worker() -> None:
-        try:
-            func(*args)
-        except Exception:
-            pass
-
-    threading.Thread(target=worker, name=nome, daemon=True).start()
-
-
-# ── Leitura/escrita de cookie ─────────────────────────────────────────────────
-
-def _ler_cookie() -> Optional[str]:
-    """Lê o token do cookie HTTP (via st.context — disponível desde Streamlit 1.37)."""
-    try:
-        return st.context.cookies.get(COOKIE_NAME)
-    except Exception:
-        return None
-
-
-def _escrever_cookie_neste_render(token: str) -> None:
-    """
-    Escreve o cookie via JS neste render.
-    Só chamar quando o render vai COMPLETAR (sem st.rerun() depois).
-    """
-    components.html(
-        f"<script>"
-        f"  window.parent.document.cookie = "
-        f"  '{COOKIE_NAME}={token}; max-age={COOKIE_MAX_AGE}; path=/; SameSite=Strict';"
-        f"</script>",
-        height=1,
-    )
-
-
-def _apagar_cookie() -> None:
-    """Apaga o cookie via JS (max-age=0)."""
-    components.html(
-        f"<script>"
-        f"  window.parent.document.cookie = "
-        f"  '{COOKIE_NAME}=; max-age=0; path=/; SameSite=Strict';"
-        f"</script>",
-        height=1,
-    )
-
-
-# ── API pública ───────────────────────────────────────────────────────────────
-
 def processar_cookie_pendente() -> None:
-    """
-    Chamado NO INÍCIO de cada render (em app.py, antes de route_app).
-    Se há um cookie pendente de escrita, escreve agora — este render vai
-    completar normalmente, então o JS vai executar no browser.
-    """
-    if st.session_state.pop('_pending_cookie_delete', False):
-        _apagar_cookie()
-        st.session_state['_sessao_verificada'] = True
-        return
+    """Compatibilidade com chamadas existentes; não há cookie de autenticação."""
+    st.session_state.pop("_pending_cookie", None)
+    st.session_state.pop("_pending_cookie_delete", None)
 
-    token = st.session_state.pop('_pending_cookie', None)
-    if token:
-        _escrever_cookie_neste_render(token)
+
+def _encerrar_sessao_local() -> None:
+    st.session_state.clear()
+    st.session_state["_sessao_verificada"] = True
 
 
 def is_authenticated() -> bool:
-    """
-    Verifica autenticação:
-    1. session_state já tem → retorna True e renova inatividade no BD
-    2. cookie no browser → valida token no BD → restaura session_state
-    3. sem nenhum → False
-    """
-    if st.session_state.get('autenticado'):
-        # Renova inatividade no banco de forma espaçada; evita um UPDATE a cada rerun.
-        token = st.session_state.get('token')
+    """Valida a sessão exclusivamente pelo token mantido no session_state."""
+    if st.session_state.get("autenticado"):
+        token = st.session_state.get("token")
         agora = time.time()
-        ultima_renovacao = st.session_state.get('_ultima_renovacao_sessao', 0)
-        if token and (agora - ultima_renovacao) >= SESSION_RENEW_INTERVAL_SECONDS:
-            st.session_state['_ultima_renovacao_sessao'] = agora
-            _executar_sessao_em_background(
-                "picta-renovar-sessao",
-                renovar_sessao,
-                token,
-            )
+        ultima = st.session_state.get("_ultima_verificacao_sessao", 0)
+
+        if not token:
+            _encerrar_sessao_local()
+            return False
+
+        if agora - ultima >= SESSION_RENEW_INTERVAL_SECONDS:
+            usuario = validar_sessao(token)
+            st.session_state["_ultima_verificacao_sessao"] = agora
+            if not usuario:
+                _encerrar_sessao_local()
+                return False
+            st.session_state["usuario"] = usuario
+            renovar_sessao(token)
+
         return True
 
-    # Evita re-verificar o cookie múltiplas vezes no mesmo render cycle
-    if st.session_state.get('_sessao_verificada'):
-        return False
-    st.session_state['_sessao_verificada'] = True
-
-    token = _ler_cookie()
-    if not token:
+    if st.session_state.get("_sessao_verificada"):
         return False
 
-    usuario = validar_sessao(token)
-    if usuario:
-        st.session_state.update({
-            'autenticado':       True,
-            'usuario':           usuario,
-            'token':             token,
-            '_pending_cookie':   token,   # renova o cookie neste render
-        })
-        return True
-
-    _apagar_cookie()
+    # Não recuperamos autenticação por cookie próprio. O token só existe no
+    # estado de sessão do servidor para esta sessão do Streamlit.
+    st.session_state["_sessao_verificada"] = True
     return False
 
 
 def login() -> None:
-    """Renderiza o formulário de login e processa o submit."""
-    tela = st.session_state.get('tela', 'login')
-    if tela == 'cadastro':
+    tela = st.session_state.get("tela", "login")
+    if tela == "cadastro":
         from views.cadastro import render as render_cadastro
         render_cadastro()
         return
 
     from views.login import render_login_form
     (
-        username,
-        senha,
-        submitted,
-        feedback,
-        reset_email,
-        reset_submitted,
-        reset_feedback,
+        username, senha, submitted, feedback,
+        reset_email, reset_submitted, reset_feedback,
     ) = render_login_form()
 
     if reset_submitted:
@@ -160,9 +85,7 @@ def login() -> None:
         if erro_reset:
             reset_feedback.error("❌ " + erro_reset)
         else:
-            reset_feedback.success(
-                "Se o email estiver cadastrado, enviaremos uma senha temporaria."
-            )
+            reset_feedback.success("Se o email estiver cadastrado, enviaremos uma senha temporaria.")
         return
 
     if not submitted:
@@ -176,65 +99,54 @@ def login() -> None:
         feedback.error("Usuário ou senha não conferem. Tente novamente.")
         return
 
-    token = criar_sessao(user['id'])
-    # Guarda o token para ser escrito como cookie NO PRÓXIMO render
-    # (depois do st.rerun), quando o render vai até o final.
+    token = criar_sessao(user["id"])
     st.session_state.update({
-        'autenticado':       True,
-        'usuario':           user,
-        'token':             token,
-        '_sessao_verificada': True,
-        '_pending_cookie':   token,
-        '_ultima_renovacao_sessao': time.time(),
+        "autenticado": True,
+        "usuario": user,
+        "token": token,
+        "_sessao_verificada": True,
+        "_ultima_verificacao_sessao": time.time(),
     })
     st.rerun()
 
 
 def render_troca_senha_obrigatoria() -> None:
     from utils.css_loader import inject_css
-
-    inject_css('picta_design.css')
-    usuario = st.session_state.get('usuario', {})
+    inject_css("picta_design.css")
     st.markdown(
         '<div style="max-width:520px;margin:2rem auto;">'
         '<div class="glass-card" style="padding:1.4rem 1.5rem;">'
         '<div class="sec-header">🔐 Troque sua senha</div>'
         '<div style="font-size:.9rem;color:#4b5563;font-weight:600;line-height:1.5">'
         'Voce entrou com uma senha temporaria. Crie uma nova senha para continuar.'
-        '</div>'
-        '</div>'
-        '</div>',
+        '</div></div></div>',
         unsafe_allow_html=True,
     )
+    usuario = st.session_state.get("usuario", {})
     with st.form("form_troca_senha_obrigatoria"):
         nova = st.text_input("Nova senha", type="password", placeholder="Minimo 6 caracteres")
         confirmar = st.text_input("Confirmar nova senha", type="password")
         submitted = st.form_submit_button("Salvar nova senha", use_container_width=True)
-
     if not submitted:
         return
     if nova != confirmar:
         st.error("As senhas nao coincidem.")
         return
-    erro = trocar_senha_obrigatoria(usuario.get('id'), nova)
+    erro = trocar_senha_obrigatoria(usuario.get("id"), nova)
     if erro:
         st.error("❌ " + erro)
         return
-    st.session_state['usuario']['deve_trocar_senha'] = False
+    st.session_state["usuario"]["deve_trocar_senha"] = False
     st.success("Senha alterada com sucesso.")
     st.rerun()
 
 
 def logout() -> None:
-    """Encerra a sessão, apaga o cookie e limpa o state."""
-    token = st.session_state.get('token')
+    token: Optional[str] = st.session_state.get("token")
     if token:
-        _executar_sessao_em_background(
-            "picta-revogar-sessao",
-            revogar_sessao,
-            token,
-        )
-    st.session_state.clear()
-    st.session_state['_pending_cookie_delete'] = True
-    st.session_state['_sessao_verificada'] = True
+        try:
+            revogar_sessao(token)
+        except Exception:
+            pass
+    _encerrar_sessao_local()
     st.rerun()
