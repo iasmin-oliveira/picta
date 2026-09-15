@@ -98,7 +98,7 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
             senha_crianca = st.text_input("Nova senha da criança", type="password", placeholder="Mínimo 6 caracteres")
             conf_crianca = st.text_input("Confirmar senha da criança", type="password")
             if st.form_submit_button("Atualizar senha da criança", use_container_width=True):
-                if senha_crianca != conf_senha:
+                if senha_crianca != conf_crianca:
                     st.error("As senhas não coincidem.")
                 else:
                     erro = atualizar_senha_crianca_responsavel(usuario_id, opcoes[crianca_nome], senha_crianca)
