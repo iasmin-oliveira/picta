@@ -38,7 +38,7 @@ def render_login_form():
 
         # ── Formulário de login ───────────────────────────
         with st.form("form_login", clear_on_submit=False):
-            username  = st.text_input("👶​🧒​👦 Login", placeholder="Digite seu usuário")
+            username  = st.text_input("👶🧒👦 Login", placeholder="Digite seu usuário")
             senha     = st.text_input("🔒  Senha", type="password", placeholder="Digite sua senha")
             submitted = st.form_submit_button("✨  Entrar no PICTA", use_container_width=True)
 
@@ -47,12 +47,12 @@ def render_login_form():
         with st.expander("Esqueci minha senha"):
             with st.form("form_recuperar_senha", clear_on_submit=True):
                 reset_email = st.text_input(
-                    "Email cadastrado",
+                    "E-mail cadastrado",
                     placeholder="voce@email.com",
                     key="reset_email",
                 )
                 reset_submitted = st.form_submit_button(
-                    "Enviar senha temporaria",
+                    "Enviar senha temporária",
                     use_container_width=True,
                 )
 

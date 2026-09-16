@@ -1,0 +1,44 @@
+/* PICTA — ajustes finais de composição da UI
+   Escopo: somente apresentação.
+   Esta folha é carregada por último para corrigir conflitos de ordem entre
+   estilos específicos de tela e a camada global de acessibilidade.
+*/
+
+/* O nome PICTA faz parte da identidade visual e não deve herdar a escala
+   dos títulos de conteúdo. Mantemos o tamanho já usado na tela original. */
+.picta-logo h1 {
+  font-size: 3.2rem !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  margin: 0.2rem 0 0 !important;
+}
+
+.picta-logo p {
+  font-size: 0.92rem !important;
+  line-height: 1.3 !important;
+}
+
+/* Botão de retorno do cadastro: ação secundária, compacta e centralizada. */
+[data-testid="stButton"] > button.picta-return-button {
+  min-height: 44px !important;
+  height: 44px !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  padding: 0.45rem 1rem !important;
+}
+
+@media (max-width: 640px) {
+  .picta-logo h1 {
+    font-size: 2.45rem !important;
+  }
+
+  .picta-logo p {
+    font-size: 0.84rem !important;
+  }
+
+  [data-testid="stButton"] > button.picta-return-button {
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 0.9375rem !important;
+  }
+}

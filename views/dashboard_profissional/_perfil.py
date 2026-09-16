@@ -55,7 +55,7 @@ def render_perfil(usuario_id, nome: str, iniciais: str) -> None:
             novo_nome = st.text_input("Nome completo", value=nome_atual)
             novo_username = st.text_input("Nome de usuário", value=username_atual, help="Letras, números e ponto. Ex: dra.marina")
             st.caption("🔑 Alterar senha — deixe em branco para manter a atual")
-            novo_email = st.text_input("Email de recuperacao", value=email_atual or "")
+            novo_email = st.text_input("E-mail de recuperação", value=email_atual or "")
             nova_senha = st.text_input("Nova senha", type="password", placeholder="Mínimo 6 caracteres")
             conf_senha = st.text_input("Confirmar nova senha", type="password")
 
