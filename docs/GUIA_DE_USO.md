@@ -4,7 +4,7 @@
 
 O PICTA é um assistente de comunicação e expressão emocional com apoio visual, desenvolvido para apoiar crianças neurodiversas por meio de pictogramas.
 
-A aplicação possui áreas específicas para **Criança**, **Responsável/Cuidador** e **Profissional de Saúde**. Cada perfil apresenta somente os recursos adequados ao seu contexto de uso.
+A aplicação possui áreas específicas para **Criança**, **Responsável / Cuidador** e **Profissional de Saúde**. Cada perfil apresenta somente os recursos adequados ao seu contexto de uso.
 
 ## 2. Antes de começar
 
@@ -47,7 +47,7 @@ Utilize **Sair** para encerrar a sessão.
 
 ## 4. Uso pelo responsável / cuidador
 
-A área do responsável apresenta cinco seções principais.
+A área do responsável apresenta seis seções principais.
 
 ### 4.1 Hoje
 
