@@ -9,17 +9,16 @@
 
 :root {
   --picta-font-body: clamp(1rem, 0.96rem + 0.12vw, 1.125rem);
-  --picta-font-label: clamp(0.9375rem, 0.9rem + 0.10vw, 1rem);
-  --picta-font-control: clamp(0.9375rem, 0.9rem + 0.12vw, 1.0625rem);
-  --picta-font-secondary: clamp(0.875rem, 0.84rem + 0.10vw, 1rem);
-  --picta-font-caption: clamp(0.8125rem, 0.79rem + 0.08vw, 0.9375rem);
-  --picta-font-nav: clamp(0.9375rem, 0.9rem + 0.10vw, 1.0625rem);
+  --picta-font-label: clamp(1rem, 0.96rem + 0.10vw, 1.0625rem);
+  --picta-font-control: clamp(1rem, 0.96rem + 0.12vw, 1.0625rem);
+  --picta-font-secondary: clamp(0.9375rem, 0.90rem + 0.10vw, 1rem);
+  --picta-font-caption: clamp(0.875rem, 0.84rem + 0.08vw, 0.9375rem);
+  --picta-font-nav: clamp(1rem, 0.96rem + 0.10vw, 1.0625rem);
   --picta-font-title: clamp(1.65rem, 1.45rem + 0.65vw, 2rem);
   --picta-touch-min: 44px;
   --picta-touch-preferred: 48px;
 }
 
-/* Corpo e conteúdo textual */
 html,
 body,
 [data-testid="stAppViewContainer"] {
@@ -39,7 +38,6 @@ body,
   font-size: var(--picta-font-caption) !important;
 }
 
-/* Títulos renderizados por componentes nativos */
 [data-testid="stMarkdownContainer"] h1 {
   font-size: clamp(1.8rem, 1.55rem + 0.8vw, 2.25rem) !important;
   line-height: 1.18 !important;
@@ -53,7 +51,6 @@ body,
   line-height: 1.25 !important;
 }
 
-/* Cabeçalhos e textos do sistema de design PICTA */
 .page-title {
   font-size: var(--picta-font-title) !important;
 }
@@ -72,7 +69,6 @@ body,
   line-height: 1.3 !important;
 }
 
-/* Sidebar */
 [data-testid="stSidebar"] .nav-desc,
 [data-testid="stSidebar"] .sidebar-select-label,
 [data-testid="stSidebar"] .sidebar-profile-role {
@@ -91,7 +87,6 @@ body,
   font-size: 0.9375rem !important;
 }
 
-/* Formulários e controles */
 [data-testid="stTextInput"] label,
 [data-testid="stSelectbox"] label,
 [data-testid="stDateInput"] label,
@@ -133,7 +128,6 @@ body,
   min-height: var(--picta-touch-preferred) !important;
 }
 
-/* Expander e componentes informativos */
 [data-testid="stExpander"] summary,
 [data-testid="stExpander"] details > summary,
 .picta-details > summary {
@@ -149,7 +143,6 @@ body,
   line-height: 1.5 !important;
 }
 
-/* Dashboard: informações secundárias sem texto microscópico */
 .kpi-label,
 .kpi-sub,
 .diary-time,
@@ -188,8 +181,6 @@ body,
   font-size: clamp(1.8rem, 1.6rem + 0.4vw, 2.2rem) !important;
 }
 
-/* Interface infantil: preservar área de toque e aumentar leitura sem
-   reduzir o número de opções por meio de tipografia menor. */
 .pc-saudacao {
   font-size: clamp(1.2rem, 1.05rem + 0.45vw, 1.5rem) !important;
   line-height: 1.2 !important;
@@ -235,8 +226,6 @@ body,
   font-size: var(--picta-font-caption) !important;
 }
 
-/* Login: manter a composição atual e corrigir somente legibilidade/área
-   de interação. */
 [data-testid="stTextInput"] label {
   font-size: var(--picta-font-label) !important;
 }
@@ -250,52 +239,41 @@ body,
   font-size: var(--picta-font-caption) !important;
 }
 
-/* Tablet: reorganização estrutural, sem transformar a página em uma
-   versão desktop espremida. */
 @media (min-width: 721px) and (max-width: 1199px) {
   [data-testid="stMainBlockContainer"] {
     padding: 1.25rem 1.5rem 2rem !important;
   }
-
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
-
   .patient-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
-
   .pc-native-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 0.75rem !important;
   }
-
   .pc-cat-menu {
     gap: 0.55rem !important;
   }
-
   [data-testid="stSidebar"] {
     min-width: 235px !important;
     max-width: 250px !important;
   }
 }
 
-/* Não permitir que ajustes móveis voltem a produzir texto de 12px ou menos. */
 @media (max-width: 900px) {
   [data-testid="stMarkdownContainer"],
   [data-testid="stMarkdownContainer"] p,
   [data-testid="stMarkdownContainer"] li {
     font-size: 1rem !important;
   }
-
   .page-title {
     font-size: clamp(1.5rem, 1.3rem + 0.75vw, 1.9rem) !important;
   }
-
   .page-subtitle {
     font-size: 0.9375rem !important;
   }
-
   [data-testid="stTextInput"] input,
   [data-testid="stDateInput"] input,
   [data-testid="stNumberInput"] input,
@@ -304,25 +282,19 @@ body,
   [data-testid="stMultiSelect"] [data-baseweb="select"] {
     font-size: 1rem !important;
   }
-
   [data-testid="stButton"] > button,
   [data-testid="stFormSubmitButton"] > button,
   [data-testid="stDownloadButton"] > button {
     min-height: 48px !important;
     font-size: 1rem !important;
   }
-
   .pc-picto-button,
   [data-testid="stColumn"] [data-testid="stButton"] button {
     min-height: 84px !important;
   }
-
   .pc-picto-name {
     font-size: 1rem !important;
   }
-
-  /* Cards administrativas passam a uma coluna quando a área útil fica
-     estreita. Isso evita cortes horizontais sem reduzir a fonte. */
   .patient-grid {
     grid-template-columns: 1fr !important;
   }
@@ -332,15 +304,12 @@ body,
   .page-title {
     font-size: 1.45rem !important;
   }
-
   .kpi-value,
   .mini-stat-value {
     font-size: 1.7rem !important;
   }
 }
 
-/* Acessibilidade: foco forte permanece visível também em componentes
-   que recebem estilos globais. */
 *:focus-visible {
   outline: 3px solid var(--indigo-500, #6366f1) !important;
   outline-offset: 2px !important;
