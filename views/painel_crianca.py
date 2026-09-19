@@ -5,7 +5,6 @@ from __future__ import annotations
 import html
 import json
 import time
-from urllib.parse import urlencode
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -61,14 +60,11 @@ def render() -> None:
         st.stop()
 
     inject_css("painel_crianca_grid.css")
-    _instalar_feedback_cliente()
-    _instalar_fala_cliente()
     pictos_por_cat = _obter_pictogramas()
     categorias = [cat for cat in CATEGORIA_ORDEM if pictos_por_cat.get(cat)]
     if not categorias:
         st.info("Nenhum pictograma cadastrado ainda.")
         return
-    _processar_pictograma_query(crianca_id, pictos_por_cat)
     _render_header(primeiro)
     feedback_slot = st.empty()
     feedback = st.session_state.get("pc_feedback")
@@ -78,8 +74,13 @@ def render() -> None:
     else:
         st.session_state.pop("pc_feedback", None)
         st.session_state.pop("pc_feedback_until", None)
-    _render_paineis_categoria(categorias, pictos_por_cat)
-    st.markdown('<iframe class="pc-register-frame" name="pc-register-frame" title="Registro de comunicação"></iframe>', unsafe_allow_html=True)
+    erro = st.session_state.pop("pc_registro_erro", "")
+    if erro:
+        feedback_slot.error(erro)
+    fala = st.session_state.pop("pc_fala_pendente", "")
+    if fala:
+        _falar(fala)
+    _render_paineis_categoria(categorias, pictos_por_cat, crianca_id)
 
 
 def _render_header(primeiro: str) -> None:
@@ -87,81 +88,52 @@ def _render_header(primeiro: str) -> None:
     st.markdown(f'<div class="pc-header"><div class="pc-header-copy"><div class="pc-saudacao">Ol&aacute;, {primeiro_html}!</div><div class="pc-sub">Como voc&ecirc; est&aacute; se sentindo agora?</div></div><div class="pc-header-actions"><div class="pc-header-icon">&#127752;</div><a class="pc-logout-link" href="?pc_logout=1" target="_self">Sair</a></div></div>', unsafe_allow_html=True)
 
 
-def _render_paineis_categoria(categorias: list[str], pictos_por_cat: dict) -> None:
+def _render_paineis_categoria(categorias: list[str], pictos_por_cat: dict, crianca_id: int) -> None:
     if "pc_categoria" not in st.session_state or st.session_state["pc_categoria"] not in categorias:
         st.session_state["pc_categoria"] = categorias[0]
-    atual = st.session_state["pc_categoria"]
-    links, paineis = [], []
-    for cat in categorias:
-        info = CATEGORIAS[cat]
-        tab_id = f"pc-tab-{cat}"
-        classe = "pc-cat-tab pc-cat-default" if cat == atual else "pc-cat-tab"
-        painel_classe = "pc-painel pc-default-panel" if cat == atual else "pc-painel"
-        links.append(f'<a class="{classe}" href="#{tab_id}" aria-label="{html.escape(info["label"])}"><span class="tab-ico">{html.escape(info["emoji"])}</span><span>{html.escape(info["label"])}</span></a>')
-        paineis.append(f'<section id="{tab_id}" class="{painel_classe}"><div class="pc-panel-hint">{html.escape(info["hint"])}</div><div class="pc-native-grid">{_render_grid_html(pictos_por_cat[cat])}</div></section>')
-    st.markdown('<div class="pc-tabs"><nav class="pc-cat-menu" aria-label="Categorias">' + "".join(links) + "</nav>" + "".join(paineis) + "</div>", unsafe_allow_html=True)
+
+    labels = [f'{CATEGORIAS[cat]["emoji"]} {CATEGORIAS[cat]["label"]}' for cat in categorias]
+    valor_atual = f'{CATEGORIAS[st.session_state["pc_categoria"]]["emoji"]} {CATEGORIAS[st.session_state["pc_categoria"]]["label"]}'
+    escolhido = st.radio(
+        "Categorias",
+        labels,
+        index=labels.index(valor_atual),
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    categoria = categorias[labels.index(escolhido)]
+    st.session_state["pc_categoria"] = categoria
+
+    info = CATEGORIAS[categoria]
+    st.markdown(f'<div class="pc-panel-hint">{html.escape(info["hint"])}</div>', unsafe_allow_html=True)
+    pictogramas = pictos_por_cat[categoria]
+    for linha in range(0, len(pictogramas), 4):
+        cols = st.columns(4)
+        for col, picto in zip(cols, pictogramas[linha:linha + 4]):
+            nome = str(picto["nome"]).title()
+            label = f'{picto["emoji"]}\n{nome}'
+            with col:
+                if st.button(label, key=f'pc_botao_pictograma_{picto["id"]}', use_container_width=True):
+                    _processar_clique_pictograma(crianca_id, picto)
 
 
-def _render_grid_html(pictogramas: list[dict]) -> str:
-    nonce = str(time.time_ns())
-    cards = []
-    for picto in pictogramas:
-        nome = picto["nome"].title()
-        categoria = str(picto.get("categoria", ""))
-        categoria_label = CATEGORIA_FEEDBACK.get(categoria, "Registro")
-        fala_texto = f'{CATEGORIA_FALA.get(categoria, categoria_label)}: {nome}'
-        feedback_payload = html.escape(json.dumps({"emoji": str(picto["emoji"]), "nome": nome, "categoria": categoria_label, "fala": fala_texto}, ensure_ascii=False), quote=True)
-        params = urlencode({"pc_picto": str(picto["id"]), "pc_nome": str(picto["nome"]), "pc_cat": categoria, "pc_nonce": nonce})
-        cards.append(f'<a class="pc-picto-button" href="?{params}" target="pc-register-frame" aria-label="{html.escape(nome)}" data-feedback="{feedback_payload}"><span class="pc-picto-emoji">{html.escape(str(picto["emoji"]))}</span><span class="pc-picto-name">{html.escape(nome)}</span><span class="pc-card-feedback" aria-hidden="true"><span class="pc-feedback-emoji">{html.escape(str(picto["emoji"]))}</span><span class="pc-feedback-text"><b>{html.escape(nome)}</b> registrado.<small>{html.escape(categoria_label)}</small></span></span></a>')
-    return "".join(cards)
-
-
-def _processar_pictograma_query(crianca_id: int, pictos_por_cat: dict) -> None:
-    picto_raw = _query_valor("pc_picto")
-    if not picto_raw:
-        return
-    nonce = _query_valor("pc_nonce") or ""
-    chave = f"{picto_raw}:{nonce}"
-    if st.session_state.get("_pc_ultimo_registro_query") == chave:
-        _limpar_query_params(); st.rerun(); return
-    try:
-        picto_id = int(picto_raw)
-    except (TypeError, ValueError):
-        _limpar_query_params(); st.rerun(); return
-    picto = _buscar_pictograma(pictos_por_cat, picto_id) or _buscar_pictograma_por_nome(pictos_por_cat, _query_valor("pc_nome"), _query_valor("pc_cat"))
-    if not picto:
-        _limpar_query_params(); st.rerun(); return
+def _processar_clique_pictograma(crianca_id: int, picto: dict) -> None:
     picto_id = int(picto["id"])
-    _registrar_interacao(crianca_id, picto_id)
-    st.session_state["_pc_ultimo_registro_query"] = chave
-    feedback = {"emoji": picto["emoji"], "nome": picto["nome"].title(), "categoria": picto.get("categoria", "")}
-    st.session_state["pc_feedback"] = feedback
-    st.session_state["pc_feedback_until"] = time.time() + 4
-    if feedback["categoria"] in CATEGORIAS:
-        st.session_state["pc_categoria"] = feedback["categoria"]
-    _limpar_query_params(); st.rerun()
-
-
-def _buscar_pictograma(pictos_por_cat: dict, picto_id: int) -> dict | None:
-    for pictos in pictos_por_cat.values():
-        for picto in pictos:
-            if int(picto["id"]) == picto_id:
-                return picto
-    return None
-
-
-def _buscar_pictograma_por_nome(pictos_por_cat: dict, nome: str, categoria: str) -> dict | None:
-    nome_normalizado = (nome or "").strip().upper()
-    categoria = (categoria or "").strip()
-    if not nome_normalizado:
-        return None
-    candidatos = pictos_por_cat.get(categoria, []) if categoria else []
-    if not candidatos:
-        candidatos = [picto for pictos in pictos_por_cat.values() for picto in pictos]
-    for picto in candidatos:
-        if str(picto.get("nome", "")).strip().upper() == nome_normalizado:
-            return picto
-    return None
+    categoria = str(picto.get("categoria", ""))
+    nome = str(picto.get("nome", "")).title()
+    if _registrar_interacao(crianca_id, picto_id):
+        st.session_state["pc_feedback"] = {
+            "emoji": picto.get("emoji", ""),
+            "nome": nome,
+            "categoria": categoria,
+        }
+        st.session_state["pc_feedback_until"] = time.time() + 4
+        st.session_state["pc_categoria"] = categoria
+        categoria_label = CATEGORIA_FEEDBACK.get(categoria, "Registro")
+        st.session_state["pc_fala_pendente"] = f"{CATEGORIA_FALA.get(categoria, categoria_label)}: {nome}"
+    else:
+        st.session_state["pc_registro_erro"] = "Não consegui salvar esta escolha. Faça login novamente e tente outra vez."
+    st.rerun()
 
 
 def _registrar_interacao(crianca_id: int, pictograma_id: int) -> bool:
@@ -182,66 +154,9 @@ def _query_valor(nome: str) -> str:
     return str(valor or "")
 
 
-def _limpar_query_params() -> None:
-    try:
-        st.query_params.clear()
-    except Exception:
-        pass
-
-
-def _limpar_url_cliente() -> None:
-    components.html("""<script>(() => { try { const w = window.parent || window; if (w.location.search) w.history.replaceState({}, "", w.location.pathname); } catch (err) {} })();</script>""", height=1)
-
-
-def _instalar_feedback_cliente() -> None:
-    components.html("""
-<script>
-(() => {
-  const w = window.parent || window;
-  if (w.__pictaFeedbackReady) return;
-  w.__pictaFeedbackReady = true;
-  w.__pictaShowPendingFeedback = (data = {}) => {
-    try {
-      const doc = w.document;
-      let el = doc.getElementById("pc-client-feedback");
-      if (!el) { el = doc.createElement("div"); el.id = "pc-client-feedback"; el.className = "pc-feedback-top pc-feedback-client"; doc.body.appendChild(el); }
-      el.textContent = "";
-      const emoji = doc.createElement("span"); emoji.className = "pc-feedback-emoji"; emoji.textContent = data.emoji || "✓";
-      const texto = doc.createElement("span"); texto.className = "pc-feedback-text";
-      const nome = doc.createElement("b"); nome.textContent = data.nome || "Registrado"; texto.appendChild(nome); texto.appendChild(doc.createTextNode(" registrado."));
-      const categoria = doc.createElement("small"); categoria.textContent = data.categoria || "Registro"; texto.appendChild(categoria);
-      el.appendChild(emoji); el.appendChild(texto); el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
-      const falaTexto = data.fala || [data.categoria, data.nome].filter(Boolean).join(": ");
-      const synth = w.speechSynthesis || window.speechSynthesis;
-      if (falaTexto && synth) { const ultimo = w.__pictaLastSpoken || {}; if (!(ultimo.texto === falaTexto && Date.now() - ultimo.ts < 5000)) { synth.cancel(); const fala = new SpeechSynthesisUtterance(falaTexto); fala.lang = "pt-BR"; fala.rate = 0.9; fala.pitch = 1.05; w.__pictaLastSpoken = { texto: falaTexto, ts: Date.now() }; synth.speak(fala); } }
-    } catch (err) {}
-  };
-  w.document.addEventListener("click", (event) => { try { const alvo = event.target && event.target.closest ? event.target.closest("a.pc-picto-button[data-feedback]") : null; if (!alvo) return; w.__pictaShowPendingFeedback(JSON.parse(alvo.dataset.feedback || "{}")); } catch (err) {} }, true);
-})();
-</script>
-""", height=1)
-
-
 def _falar(texto: str) -> None:
     payload = json.dumps(texto, ensure_ascii=False)
     components.html(f"""<script>(() => {{ const texto = {payload}; try {{ const w = window.parent || window; const ultimo = w.__pictaLastSpoken || {{}}; if (ultimo.texto === texto && Date.now() - ultimo.ts < 5000) return; const synth = w.speechSynthesis || window.speechSynthesis; if (!synth) return; synth.cancel(); const fala = new SpeechSynthesisUtterance(texto); fala.lang = 'pt-BR'; fala.rate = 0.9; fala.pitch = 1.05; w.__pictaLastSpoken = {{ texto, ts: Date.now() }}; synth.speak(fala); }} catch (err) {{}} }})();</script>""", height=1)
-
-
-def _instalar_fala_cliente() -> None:
-    components.html("""
-<script>
-(() => {
-  try {
-    const w = window.parent || window, doc = w.document;
-    if (!doc || w.__pictaSpeakHandlerInstalled) return;
-    w.__pictaSpeakHandlerInstalled = true;
-    const limparTexto = (texto) => { const linhas = String(texto || "").split(/\\n+/).map((p) => p.trim()).filter(Boolean); const alvo = linhas.length > 1 ? linhas[linhas.length - 1] : linhas[0]; return (alvo || "").replace(/^\\p{Extended_Pictographic}+/u, "").trim(); };
-    const falar = (texto) => { const synth = w.speechSynthesis || window.speechSynthesis; if (!synth || !texto || texto.toLowerCase() === "sair") return; synth.cancel(); const fala = new SpeechSynthesisUtterance(texto); fala.lang = "pt-BR"; fala.rate = 0.9; fala.pitch = 1.05; w.__pictaLastSpoken = { texto, ts: Date.now() }; synth.speak(fala); };
-    doc.addEventListener("click", (evento) => { const alvo = evento.target.closest("button, .pc-picto-button"); if (!alvo || alvo.matches(".pc-picto-button")) return; const texto = limparTexto(alvo.innerText || alvo.textContent); if (texto && texto.toLowerCase() !== "sair") falar(texto); }, true);
-  } catch (err) {}
-})();
-</script>
-""", height=1)
 
 
 log_debug("painel_crianca.py carregado")

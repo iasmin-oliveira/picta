@@ -19,3 +19,13 @@ def test_all_python_sources_compile():
         compile(source.read_text(encoding="utf-8"), str(source), "exec")
         checked += 1
     assert checked > 0
+
+
+def test_child_panel_records_clicks_in_streamlit_session():
+    source = Path("views/painel_crianca.py").read_text(encoding="utf-8")
+
+    assert "pc-register-frame" not in source
+    assert 'target="pc-register-frame"' not in source
+    assert '"pc_picto"' not in source
+    assert "st.button" in source
+    assert "registar_interacao" in source
