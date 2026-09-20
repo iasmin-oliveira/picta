@@ -23,6 +23,18 @@ CATEGORIAS = {
 CATEGORIA_ORDEM = ["emocao", "acao", "necessidade"]
 CATEGORIA_FEEDBACK = {"emocao": "Sentimento", "acao": "Ação", "necessidade": "Necessidade"}
 CATEGORIA_FALA = {"emocao": "Sentimento", "acao": "O que quero fazer", "necessidade": "Necessidade"}
+ORIENTACAO_TITULO = "Como usar o PICTA"
+ORIENTACAO_TEXTO = (
+    "Escolha uma categoria: como me sinto, o que quero fazer ou o que preciso. "
+    "Depois toque em uma figura. Eu vou falar a sua escolha e salvar para o seu "
+    "responsavel e profissional acompanharem."
+)
+ORIENTACAO_FALA = (
+    "Oi! Eu sou o PICTA. Primeiro escolha uma categoria: como me sinto, "
+    "o que quero fazer, ou o que preciso. Depois toque em uma figura. "
+    "Eu vou falar a sua escolha e salvar para o seu responsavel e profissional acompanharem. "
+    "Se quiser ouvir esta explicacao de novo, toque no botao ajuda."
+)
 
 
 def _obter_pictogramas() -> dict:
@@ -66,6 +78,7 @@ def render() -> None:
         st.info("Nenhum pictograma cadastrado ainda.")
         return
     _render_header(primeiro)
+    _render_orientacao(crianca_id)
     feedback_slot = st.empty()
     feedback = st.session_state.get("pc_feedback")
     feedback_until = st.session_state.get("pc_feedback_until", 0)
@@ -86,6 +99,94 @@ def render() -> None:
 def _render_header(primeiro: str) -> None:
     primeiro_html = html.escape(primeiro)
     st.markdown(f'<div class="pc-header"><div class="pc-header-copy"><div class="pc-saudacao">Ol&aacute;, {primeiro_html}!</div><div class="pc-sub">Como voc&ecirc; est&aacute; se sentindo agora?</div></div><div class="pc-header-actions"><div class="pc-header-icon">&#127752;</div><a class="pc-logout-link" href="?pc_logout=1" target="_self">Sair</a></div></div>', unsafe_allow_html=True)
+
+
+def _render_orientacao(crianca_id: int) -> None:
+    concluida_key = f"pc_orientacao_concluida_{crianca_id}"
+    falada_key = f"pc_orientacao_falada_{crianca_id}"
+    if st.session_state.get(concluida_key) or _crianca_tem_interacoes(crianca_id):
+        st.session_state[concluida_key] = True
+        _render_botao_ajuda("Ajuda")
+        return
+
+    if not st.session_state.get(falada_key):
+        st.session_state[falada_key] = True
+        _falar(ORIENTACAO_FALA)
+
+    st.markdown(
+        '<div class="pc-orientacao">'
+        '<div class="pc-orientacao-ico">&#128266;</div>'
+        '<div class="pc-orientacao-copy">'
+        f'<div class="pc-orientacao-titulo">{html.escape(ORIENTACAO_TITULO)}</div>'
+        f'<div class="pc-orientacao-texto">{html.escape(ORIENTACAO_TEXTO)}</div>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    _render_botao_ajuda("Ouvir ajuda")
+
+
+def _crianca_tem_interacoes(crianca_id: int) -> bool:
+    try:
+        row = executar(
+            "SELECT 1 FROM Registos_Interacao WHERE crianca_id = ? LIMIT 1",
+            (crianca_id,),
+            fetchone=True,
+        )
+        return bool(row)
+    except Exception as exc:
+        log_debug(f"erro_verificar_primeira_interacao crianca={crianca_id}: {exc}")
+        return False
+
+
+def _render_botao_ajuda(label: str) -> None:
+    label_payload = json.dumps(label, ensure_ascii=False)
+    texto_payload = json.dumps(ORIENTACAO_FALA, ensure_ascii=False)
+    components.html(
+        f"""
+<button id="pc-help-button" type="button" aria-label={label_payload}>🔊 {html.escape(label)}</button>
+<style>
+  #pc-help-button {{
+    width: 100%;
+    min-height: 46px;
+    border: 2px solid #E0D6FF;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #2D2145;
+    font: 800 0.92rem "Segoe UI", system-ui, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(107,79,160,0.06);
+  }}
+  #pc-help-button:hover, #pc-help-button:focus {{
+    border-color: #6B4FA0;
+    color: #6B4FA0;
+    outline: none;
+  }}
+</style>
+<script>
+(() => {{
+  const texto = {texto_payload};
+  const botao = document.getElementById("pc-help-button");
+  if (!botao) return;
+  botao.addEventListener("click", () => {{
+    try {{
+      const w = window.parent || window;
+      const synth = w.speechSynthesis || window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      const fala = new SpeechSynthesisUtterance(texto);
+      fala.lang = "pt-BR";
+      fala.rate = 0.9;
+      fala.pitch = 1.05;
+      w.__pictaLastSpoken = {{ texto, ts: Date.now() }};
+      synth.speak(fala);
+    }} catch (err) {{}}
+  }});
+}})();
+</script>
+""",
+        height=54,
+    )
 
 
 def _render_paineis_categoria(categorias: list[str], pictos_por_cat: dict, crianca_id: int) -> None:
@@ -122,6 +223,7 @@ def _processar_clique_pictograma(crianca_id: int, picto: dict) -> None:
     categoria = str(picto.get("categoria", ""))
     nome = str(picto.get("nome", "")).title()
     if _registrar_interacao(crianca_id, picto_id):
+        st.session_state[f"pc_orientacao_concluida_{crianca_id}"] = True
         st.session_state["pc_feedback"] = {
             "emoji": picto.get("emoji", ""),
             "nome": nome,
