@@ -41,8 +41,8 @@ ORIENTACOES_PROFISSIONAL = {
     "pesquisa": (
         "Coleta TCC",
         "Esta tela é um modo interno de coleta pseudonimizada no próprio PICTA. Use apenas se você quiser "
-        "registrar sessões controladas pela plataforma. Se o estudo usar Google Forms, configure o link do Forms "
-        "e use o botão da própria tela de pesquisa.",
+        "registrar sessões controladas pela plataforma. Para TCLE e avaliação do profissional, use o formulário "
+        "externo disponibilizado aqui.",
     ),
     "perfil": (
         "Meu perfil",
@@ -50,6 +50,10 @@ ORIENTACOES_PROFISSIONAL = {
         "consigam convidar você para acompanhar uma criança.",
     ),
 }
+
+FORMULARIOS_PROFISSIONAL = (
+    ("TCLE e avaliação do profissional", "https://forms.gle/rpAzo45ttGTan8wA6"),
+)
 
 
 def render() -> None:
@@ -185,20 +189,27 @@ def render() -> None:
 
 def _render_orientacao(pag: str) -> None:
     titulo, texto = ORIENTACOES_PROFISSIONAL.get(pag, ORIENTACOES_PROFISSIONAL["painel"])
-    estado_key = f"prof_orientacao_aberta_{pag}"
-    if estado_key not in st.session_state:
-        st.session_state[estado_key] = True
+    st.markdown(
+        '<details class="dashboard-orientation-details">'
+        '<summary>'
+        '<span class="dashboard-orientation-open">&#9432; Orientações</span>'
+        '<span class="dashboard-orientation-close" title="Fechar orientações">&times;</span>'
+        '</summary>'
+        '<div class="dashboard-orientation-body">'
+        f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
+        f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
+        f'{_render_links_formularios(FORMULARIOS_PROFISSIONAL)}'
+        '</div>'
+        '</details>',
+        unsafe_allow_html=True,
+    )
 
-    _, col = st.columns([5, 1])
-    with col:
-        if st.button("Orientações", key=f"prof_orientacao_btn_{pag}", use_container_width=True):
-            st.session_state[estado_key] = not st.session_state[estado_key]
 
-    if st.session_state.get(estado_key):
-        st.markdown(
-            '<div class="dashboard-orientation-card">'
-            f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
-            f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+def _render_links_formularios(links: tuple[tuple[str, str], ...]) -> str:
+    itens = ''.join(
+        '<a class="dashboard-form-link" '
+        f'href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(label, quote=True)}</a>'
+        for label, url in links
+    )
+    return f'<div class="dashboard-orientation-links">{itens}</div>' if itens else ''

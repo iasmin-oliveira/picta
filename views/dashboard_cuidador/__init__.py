@@ -44,6 +44,12 @@ ORIENTACOES_CUIDADOR = {
     ),
 }
 
+FORMULARIOS_CUIDADOR = (
+    ("TCLE do responsável", "https://forms.gle/PaVDpQ3zyc5UVZt2A"),
+    ("Responsável avaliando o PICTA", "https://forms.gle/Ahx9LMLGtJ1ySgsd7"),
+    ("Criança avaliando o PICTA", "https://forms.gle/KfNQ4k3kdyF6eDsb9"),
+)
+
 
 def render() -> None:
     inject_css('picta_design.css')
@@ -136,20 +142,27 @@ def render() -> None:
 
 def _render_orientacao(pag: str) -> None:
     titulo, texto = ORIENTACOES_CUIDADOR.get(pag, ORIENTACOES_CUIDADOR["hoje"])
-    estado_key = f"cui_orientacao_aberta_{pag}"
-    if estado_key not in st.session_state:
-        st.session_state[estado_key] = True
+    st.markdown(
+        '<details class="dashboard-orientation-details">'
+        '<summary>'
+        '<span class="dashboard-orientation-open">&#9432; Orientações</span>'
+        '<span class="dashboard-orientation-close" title="Fechar orientações">&times;</span>'
+        '</summary>'
+        '<div class="dashboard-orientation-body">'
+        f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
+        f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
+        f'{_render_links_formularios(FORMULARIOS_CUIDADOR)}'
+        '</div>'
+        '</details>',
+        unsafe_allow_html=True,
+    )
 
-    _, col = st.columns([5, 1])
-    with col:
-        if st.button("Orientações", key=f"cui_orientacao_btn_{pag}", use_container_width=True):
-            st.session_state[estado_key] = not st.session_state[estado_key]
 
-    if st.session_state.get(estado_key):
-        st.markdown(
-            '<div class="dashboard-orientation-card">'
-            f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
-            f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+def _render_links_formularios(links: tuple[tuple[str, str], ...]) -> str:
+    itens = ''.join(
+        '<a class="dashboard-form-link" '
+        f'href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(label, quote=True)}</a>'
+        for label, url in links
+    )
+    return f'<div class="dashboard-orientation-links">{itens}</div>' if itens else ''

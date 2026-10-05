@@ -199,10 +199,73 @@ html, body, [class*="css"], * {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.dashboard-orientation-actions {
+.dashboard-orientation-details {
+  margin: -.35rem 0 1rem;
+}
+.dashboard-orientation-details > summary {
+  list-style: none;
   display: flex;
   justify-content: flex-end;
-  margin: -.35rem 0 .75rem;
+  cursor: pointer;
+  user-select: none;
+}
+.dashboard-orientation-details > summary::-webkit-details-marker {
+  display: none;
+}
+.dashboard-orientation-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .38rem;
+  min-height: 40px;
+  padding: .48rem .85rem;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,.84);
+  box-shadow: var(--shadow-s);
+  color: var(--indigo-700);
+  font-size: .82rem;
+  font-weight: 900;
+}
+.dashboard-orientation-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--indigo-700);
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.dashboard-orientation-details[open] {
+  position: relative;
+  background: rgba(255,255,255,.78);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--indigo-500);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-s);
+  padding: .9rem 3.25rem .95rem 1rem;
+}
+.dashboard-orientation-details[open] > summary {
+  position: absolute;
+  top: .6rem;
+  right: .65rem;
+}
+.dashboard-orientation-details[open] .dashboard-orientation-open {
+  display: none;
+}
+.dashboard-orientation-details[open] .dashboard-orientation-close {
+  display: inline-flex;
+}
+.dashboard-orientation-body {
+  display: none;
+}
+.dashboard-orientation-details[open] .dashboard-orientation-body {
+  display: block;
 }
 .dashboard-orientation-card {
   background: rgba(255,255,255,.78);
@@ -227,6 +290,33 @@ html, body, [class*="css"], * {
 }
 .dashboard-orientation-text b {
   color: var(--indigo-700);
+}
+.dashboard-orientation-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+.dashboard-form-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: .42rem .72rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(79,70,229,.22);
+  background: rgba(79,70,229,.07);
+  color: var(--indigo-700) !important;
+  font-size: .78rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-decoration: none !important;
+}
+.dashboard-form-link:hover,
+.dashboard-form-link:focus {
+  background: var(--indigo-600);
+  border-color: var(--indigo-600);
+  color: #fff !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

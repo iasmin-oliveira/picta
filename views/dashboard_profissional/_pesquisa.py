@@ -11,6 +11,8 @@ import streamlit as st
 
 from modules import pesquisa
 
+FORMS_PROFISSIONAL_URL = "https://forms.gle/rpAzo45ttGTan8wA6"
+
 
 def _duracao(inicio, fim) -> str:
     if not inicio or not fim:
@@ -52,7 +54,7 @@ def _obter_link_forms() -> str:
             return str(cfg.get("forms_url"))
     except Exception:
         pass
-    return os.getenv("PICTA_FORMS_URL") or os.getenv("PESQUISA_FORMS_URL") or ""
+    return os.getenv("PICTA_FORMS_URL") or os.getenv("PESQUISA_FORMS_URL") or FORMS_PROFISSIONAL_URL
 
 
 def _render_link_forms() -> None:
@@ -61,15 +63,12 @@ def _render_link_forms() -> None:
         '<div class="dashboard-orientation-card">'
         '<div class="dashboard-orientation-title">Pesquisa externa</div>'
         '<div class="dashboard-orientation-text">'
-        'Se a etapa do TCC estiver em um Google Forms, use o link externo para questionários e TCLE/TALE. '
+        'Use o formulário externo para TCLE e avaliação do profissional. '
         'A coleta abaixo serve apenas para sessões controladas dentro do PICTA, com participante identificado por código.'
         '</div></div>',
         unsafe_allow_html=True,
     )
-    if forms_url:
-        st.link_button("Abrir pesquisa no Forms", forms_url, use_container_width=False)
-    else:
-        st.caption("Para exibir o botão do Forms, configure PICTA_FORMS_URL ou st.secrets['pesquisa']['forms_url'].")
+    st.link_button("Abrir formulário do profissional", forms_url, use_container_width=False)
 
 
 def _render_coleta(sessao_id: str) -> None:

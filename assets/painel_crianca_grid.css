@@ -485,11 +485,19 @@ footer, #MainMenu { display: none !important; }
 }
 @media (max-width: 720px) {
     [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
         flex-wrap: wrap !important;
+        gap: 0.55rem !important;
     }
-    [data-testid="column"] {
-        min-width: calc(50% - .5rem) !important;
-        flex: 1 1 calc(50% - .5rem) !important;
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        width: calc(50% - .28rem) !important;
+        min-width: calc(50% - .28rem) !important;
+        max-width: calc(50% - .28rem) !important;
+        flex: 0 0 calc(50% - .28rem) !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] > div {
+        width: 100% !important;
     }
     .pc-header {
         border-radius: 0 0 16px 16px;
