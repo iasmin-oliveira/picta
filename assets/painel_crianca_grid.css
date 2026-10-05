@@ -595,3 +595,60 @@ footer, #MainMenu { display: none !important; }
         min-height: 72px;
     }
 }
+
+@media (min-width: 721px) {
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+        padding: 0.8rem 1rem 1.25rem !important;
+    }
+    .pc-header {
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.85rem;
+    }
+    .pc-saudacao {
+        font-size: 1.55rem;
+    }
+    .pc-sub {
+        font-size: 0.98rem;
+    }
+    .pc-header-icon {
+        font-size: 2.45rem;
+    }
+    .pc-orientacao {
+        padding: 0.95rem 1rem;
+        margin-bottom: 0.75rem;
+    }
+    .pc-orientacao-ico {
+        font-size: 2rem;
+    }
+    .pc-orientacao-titulo {
+        font-size: 1.08rem;
+    }
+    .pc-orientacao-texto {
+        font-size: 0.95rem;
+    }
+    [data-testid="stRadio"] > div {
+        gap: 0.65rem !important;
+    }
+    [data-testid="stRadio"] label {
+        min-height: 58px !important;
+        padding: 0.72rem 1rem !important;
+        font-size: 1rem !important;
+    }
+    .pc-panel-hint {
+        font-size: 1.05rem;
+        margin: 0.3rem 0 0.85rem;
+    }
+    [data-testid="stButton"] > button {
+        height: 116px !important;
+        min-height: 116px !important;
+        border-radius: 16px !important;
+        font-size: 1.28rem !important;
+        line-height: 1.16 !important;
+        padding: 0.58rem 0.45rem !important;
+    }
+    [data-testid="stButton"] > button::first-line {
+        font-size: 3.1rem !important;
+        line-height: 1 !important;
+    }
+}

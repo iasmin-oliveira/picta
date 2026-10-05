@@ -190,6 +190,44 @@ html, body, [class*="css"], * {
   letter-spacing: .06em;
   margin-bottom: .3rem;
 }
+.sidebar-current-child {
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--indigo-950);
+  margin: .35rem .25rem .65rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dashboard-orientation-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -.35rem 0 .75rem;
+}
+.dashboard-orientation-card {
+  background: rgba(255,255,255,.78);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--indigo-500);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-s);
+  padding: .9rem 1rem;
+  margin: 0 0 1rem;
+}
+.dashboard-orientation-title {
+  font-size: .9rem;
+  font-weight: 900;
+  color: var(--indigo-950);
+  margin-bottom: .28rem;
+}
+.dashboard-orientation-text {
+  font-size: .86rem;
+  font-weight: 650;
+  line-height: 1.5;
+  color: var(--gray-600);
+}
+.dashboard-orientation-text b {
+  color: var(--indigo-700);
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    CONTEÚDO PRINCIPAL
@@ -583,6 +621,18 @@ html, body, [class*="css"], * {
   border: 1.5px solid var(--gray-200) !important;
   background: var(--white) !important;
   font-weight: 700 !important;
+}
+[data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] {
+  min-height: 44px !important;
+  background: rgba(255,255,255,.9) !important;
+  border-color: var(--border) !important;
+}
+[data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] span,
+[data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] input,
+[data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] div {
+  color: var(--indigo-950) !important;
+  opacity: 1 !important;
+  font-weight: 800 !important;
 }
 
 /* ─ Sidebar radio (navegação) ────────────────────────────────────── */

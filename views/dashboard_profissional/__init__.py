@@ -17,6 +17,40 @@ from ._exportacao import render_exportacao
 from ._pesquisa import render as render_pesquisa
 from ._perfil import render_perfil
 
+ORIENTACOES_PROFISSIONAL = {
+    "painel": (
+        "Painel clínico",
+        "Acompanhe os indicadores principais, alertas e o diário visual do paciente selecionado. "
+        "Use o seletor da lateral para trocar de paciente quando houver mais de uma criança vinculada.",
+    ),
+    "pacientes": (
+        "Pacientes",
+        "Veja todos os pacientes vinculados ao seu atendimento. O vínculo é criado pelo responsável, "
+        "que convida o profissional pelo nome de usuário cadastrado no PICTA.",
+    ),
+    "insights": (
+        "Insights IA",
+        "Use esta área para analisar padrões de comunicação por período. Os gráficos ajudam a observar "
+        "recorrências de emoções, necessidades, ações e possíveis sinais de atenção.",
+    ),
+    "exportar": (
+        "Exportação",
+        "Gere arquivos CSV ou PDF do paciente selecionado para apoiar acompanhamento, reuniões ou registro "
+        "acadêmico, sempre respeitando consentimento e privacidade.",
+    ),
+    "pesquisa": (
+        "Coleta TCC",
+        "Esta tela é um modo interno de coleta pseudonimizada no próprio PICTA. Use apenas se você quiser "
+        "registrar sessões controladas pela plataforma. Se o estudo usar Google Forms, configure o link do Forms "
+        "e use o botão da própria tela de pesquisa.",
+    ),
+    "perfil": (
+        "Meu perfil",
+        "Atualize seus dados de acesso e senha. Mantenha o nome de usuário correto para que responsáveis "
+        "consigam convidar você para acompanhar uma criança.",
+    ),
+}
+
 
 def render() -> None:
     inject_css('picta_design.css')
@@ -56,10 +90,21 @@ def render() -> None:
                 'PACIENTE</p>',
                 unsafe_allow_html=True,
             )
-            nomes = [c['nome'] for c in criancas]
-            sel = st.selectbox("Paciente", nomes, key="prof_sel", label_visibility="collapsed")
-            crianca_id = next(c['id'] for c in criancas if c['nome'] == sel)
-            crianca_nome = sel
+            nomes_por_id = {int(c['id']): str(c['nome']) for c in criancas}
+            ids = list(nomes_por_id)
+            sel_id = st.selectbox(
+                "Paciente",
+                ids,
+                format_func=lambda cid: nomes_por_id.get(int(cid), "Paciente"),
+                key="prof_sel_id",
+                label_visibility="collapsed",
+            )
+            crianca_id = int(sel_id)
+            crianca_nome = nomes_por_id.get(crianca_id, "")
+            st.markdown(
+                f'<div class="sidebar-current-child">{html.escape(crianca_nome, quote=True)}</div>',
+                unsafe_allow_html=True,
+            )
 
         st.markdown(
             '<hr style="border:none;border-top:1px solid #e5e7eb;margin:.7rem 0"/>',
@@ -105,6 +150,7 @@ def render() -> None:
             logout()
 
     pag = st.session_state.get('prof_pag', 'painel')
+    _render_orientacao(pag)
 
     if pag == 'perfil':
         render_perfil(usuario_id, nome, iniciais)
@@ -135,3 +181,24 @@ def render() -> None:
         render_insights(crianca_id, crianca_nome)
     elif pag == 'exportar':
         render_exportacao(crianca_id, crianca_nome)
+
+
+def _render_orientacao(pag: str) -> None:
+    titulo, texto = ORIENTACOES_PROFISSIONAL.get(pag, ORIENTACOES_PROFISSIONAL["painel"])
+    estado_key = f"prof_orientacao_aberta_{pag}"
+    if estado_key not in st.session_state:
+        st.session_state[estado_key] = True
+
+    _, col = st.columns([5, 1])
+    with col:
+        if st.button("Orientações", key=f"prof_orientacao_btn_{pag}", use_container_width=True):
+            st.session_state[estado_key] = not st.session_state[estado_key]
+
+    if st.session_state.get(estado_key):
+        st.markdown(
+            '<div class="dashboard-orientation-card">'
+            f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
+            f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )

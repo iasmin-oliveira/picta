@@ -16,6 +16,34 @@ from ._crianca import render_crianca
 from ._vinculos import render_vinculos
 from ._perfil import render_perfil
 
+ORIENTACOES_CUIDADOR = {
+    "hoje": (
+        "Hoje",
+        "Veja um resumo das comunicações mais recentes da criança selecionada. Esta tela ajuda a entender "
+        "como foi o dia e quais necessidades, ações ou emoções apareceram.",
+    ),
+    "hist": (
+        "Histórico",
+        "Consulte as interações registradas em dias anteriores. Use os filtros para localizar períodos ou "
+        "tipos de comunicação específicos.",
+    ),
+    "crianca": (
+        "Minha criança",
+        "Confira e edite os dados da criança vinculada. As informações daqui ajudam o PICTA a organizar "
+        "o acompanhamento no painel do responsável.",
+    ),
+    "vinculos": (
+        "Vínculos",
+        "Use esta tela para vincular uma criança ao seu painel e convidar profissionais de saúde. O convite "
+        "usa o nome de usuário cadastrado pelo profissional no PICTA.",
+    ),
+    "perfil": (
+        "Meu perfil",
+        "Atualize seus dados de acesso e senha. Se você cuida de uma criança, também pode alterar a senha "
+        "dela nesta área quando houver vínculo ativo.",
+    ),
+}
+
 
 def render() -> None:
     inject_css('picta_design.css')
@@ -47,10 +75,21 @@ def render() -> None:
         crianca_id, crianca_nome = None, ''
         if criancas:
             st.markdown('<div class="sidebar-select-label">Acompanhando</div>', unsafe_allow_html=True)
-            nomes = [c['nome'] for c in criancas]
-            sel = st.selectbox("Criança", nomes, key="cui_sel", label_visibility="collapsed")
-            crianca_id = next(c['id'] for c in criancas if c['nome'] == sel)
-            crianca_nome = sel
+            nomes_por_id = {int(c['id']): str(c['nome']) for c in criancas}
+            ids = list(nomes_por_id)
+            sel_id = st.selectbox(
+                "Criança",
+                ids,
+                format_func=lambda cid: nomes_por_id.get(int(cid), "Criança"),
+                key="cui_sel_id",
+                label_visibility="collapsed",
+            )
+            crianca_id = int(sel_id)
+            crianca_nome = nomes_por_id.get(crianca_id, "")
+            st.markdown(
+                f'<div class="sidebar-current-child">{html.escape(crianca_nome, quote=True)}</div>',
+                unsafe_allow_html=True,
+            )
 
         st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
 
@@ -82,6 +121,7 @@ def render() -> None:
             logout()
 
     pag = st.session_state.get('cui_pag', 'hoje')
+    _render_orientacao(pag)
     if pag == 'hoje':
         render_hoje(criancas, crianca_id, crianca_nome, primeiro)
     elif pag == 'hist':
@@ -92,3 +132,24 @@ def render() -> None:
         render_vinculos(usuario_id, perfil, criancas)
     elif pag == 'perfil':
         render_perfil(usuario_id, nome, primeiro, label)
+
+
+def _render_orientacao(pag: str) -> None:
+    titulo, texto = ORIENTACOES_CUIDADOR.get(pag, ORIENTACOES_CUIDADOR["hoje"])
+    estado_key = f"cui_orientacao_aberta_{pag}"
+    if estado_key not in st.session_state:
+        st.session_state[estado_key] = True
+
+    _, col = st.columns([5, 1])
+    with col:
+        if st.button("Orientações", key=f"cui_orientacao_btn_{pag}", use_container_width=True):
+            st.session_state[estado_key] = not st.session_state[estado_key]
+
+    if st.session_state.get(estado_key):
+        st.markdown(
+            '<div class="dashboard-orientation-card">'
+            f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
+            f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )

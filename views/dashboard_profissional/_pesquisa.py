@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 from datetime import datetime
 
 import streamlit as st
@@ -42,6 +43,33 @@ def _baixar_csv(metricas: list[dict]) -> bytes:
         item["duracao"] = _duracao(item.get("inicio"), item.get("fim"))
         writer.writerow(item)
     return buffer.getvalue().encode("utf-8-sig")
+
+
+def _obter_link_forms() -> str:
+    try:
+        cfg = st.secrets.get("pesquisa", {})
+        if hasattr(cfg, "get") and cfg.get("forms_url"):
+            return str(cfg.get("forms_url"))
+    except Exception:
+        pass
+    return os.getenv("PICTA_FORMS_URL") or os.getenv("PESQUISA_FORMS_URL") or ""
+
+
+def _render_link_forms() -> None:
+    forms_url = _obter_link_forms()
+    st.markdown(
+        '<div class="dashboard-orientation-card">'
+        '<div class="dashboard-orientation-title">Pesquisa externa</div>'
+        '<div class="dashboard-orientation-text">'
+        'Se a etapa do TCC estiver em um Google Forms, use o link externo para questionários e TCLE/TALE. '
+        'A coleta abaixo serve apenas para sessões controladas dentro do PICTA, com participante identificado por código.'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+    if forms_url:
+        st.link_button("Abrir pesquisa no Forms", forms_url, use_container_width=False)
+    else:
+        st.caption("Para exibir o botão do Forms, configure PICTA_FORMS_URL ou st.secrets['pesquisa']['forms_url'].")
 
 
 def _render_coleta(sessao_id: str) -> None:
@@ -100,6 +128,7 @@ def render() -> None:
         "Modo de coleta controlado para o TCC. Use somente após as autorizações "
         "éticas e institucionais aplicáveis ao estudo."
     )
+    _render_link_forms()
 
     sessao = st.session_state.get("pesquisa_sessao")
     if sessao:
