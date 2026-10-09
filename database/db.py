@@ -64,6 +64,30 @@ PICTOGRAMAS_SEED = [
     ("CALOR", "necessidade", "🌡️"),
 ]
 
+_PG_REQUIRED_TABLES = (
+    "utilizadores",
+    "criancas",
+    "pictogramas",
+    "registos_interacao",
+    "sessoes",
+    "vinculos",
+)
+_PG_REQUIRED_COLUMNS = (
+    ("utilizadores", "email"),
+    ("utilizadores", "deve_trocar_senha"),
+    ("criancas", "utilizador_id"),
+    ("sessoes", "ultima_atividade"),
+)
+_PG_REQUIRED_INDEXES = (
+    "idx_pictogramas_nome_unique",
+    "idx_criancas_utilizador_unique",
+    "idx_criancas_cuidador",
+    "idx_registos_crianca_data",
+    "idx_vinculos_usuario",
+    "idx_sessoes_usuario",
+    "idx_utilizadores_email",
+)
+
 
 def hash_senha(senha: str) -> str:
     return hashlib.sha256(senha.encode("utf-8")).hexdigest()
@@ -132,6 +156,11 @@ def _inicializar_pg() -> None:
     conn = _get_pg_conn()
     try:
         cur = conn.cursor()
+        if _pg_schema_pronta(cur):
+            conn.commit()
+            cur.close()
+            return
+
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS Utilizadores (
@@ -280,6 +309,78 @@ def _inicializar_pg() -> None:
         cur.close()
     finally:
         _release_pg_conn(conn)
+
+
+def _pg_schema_pronta(cur) -> bool:
+    """Avoid expensive DDL/migration work when the Neon schema is already ready."""
+    try:
+        tabelas = ",".join(["(%s)"] * len(_PG_REQUIRED_TABLES))
+        colunas = ",".join(["(%s,%s)"] * len(_PG_REQUIRED_COLUMNS))
+        indices = ",".join(["(%s)"] * len(_PG_REQUIRED_INDEXES))
+        pictos = ",".join(["(%s)"] * len(PICTOGRAMAS_SEED))
+        params = [
+            *list(_PG_REQUIRED_TABLES),
+            *(valor for par in _PG_REQUIRED_COLUMNS for valor in par),
+            *list(_PG_REQUIRED_INDEXES),
+            *(item[0] for item in PICTOGRAMAS_SEED),
+        ]
+        cur.execute(
+            f"""
+            WITH
+            required_tables(table_name) AS (VALUES {tabelas}),
+            required_columns(table_name, column_name) AS (VALUES {colunas}),
+            required_indexes(indexname) AS (VALUES {indices}),
+            required_pictos(nome) AS (VALUES {pictos})
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM information_schema.tables t
+                    JOIN required_tables r ON r.table_name = t.table_name
+                    WHERE t.table_schema = 'public'
+                ) AS total_tabelas,
+                (
+                    SELECT COUNT(*)
+                    FROM information_schema.columns c
+                    JOIN required_columns r
+                      ON r.table_name = c.table_name
+                     AND r.column_name = c.column_name
+                    WHERE c.table_schema = 'public'
+                ) AS total_colunas,
+                (
+                    SELECT COUNT(*)
+                    FROM pg_indexes i
+                    JOIN required_indexes r ON r.indexname = i.indexname
+                    WHERE i.schemaname = 'public'
+                ) AS total_indices,
+                (
+                    SELECT COUNT(DISTINCT p.nome)
+                    FROM Pictogramas p
+                    JOIN required_pictos r ON r.nome = p.nome
+                ) AS total_pictos,
+                EXISTS (
+                    SELECT 1 FROM Pictogramas GROUP BY nome HAVING COUNT(*) > 1
+                ) AS tem_duplicados,
+                EXISTS (
+                    SELECT 1 FROM Pictogramas WHERE emoji LIKE '&#%%'
+                ) AS tem_emoji_html
+            """,
+            params,
+        )
+        total_tabelas, total_colunas, total_indices, total_pictos, tem_duplicados, tem_emoji_html = cur.fetchone()
+        return (
+            int(total_tabelas) >= len(_PG_REQUIRED_TABLES)
+            and int(total_colunas) >= len(_PG_REQUIRED_COLUMNS)
+            and int(total_indices) >= len(_PG_REQUIRED_INDEXES)
+            and int(total_pictos) >= len(PICTOGRAMAS_SEED)
+            and not bool(tem_duplicados)
+            and not bool(tem_emoji_html)
+        )
+    except Exception:
+        try:
+            cur.connection.rollback()
+        except Exception:
+            pass
+        return False
 
 
 def _seed_demo_pg(cur) -> None:

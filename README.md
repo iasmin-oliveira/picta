@@ -85,14 +85,14 @@ O acesso aos dados de uma criança é condicionado ao usuário autenticado e ao 
 - **Profissional:** somente pacientes vinculados explicitamente.
 - **Interações:** leitura e gravação passam por autorização no servidor.
 - **Vínculos:** uma criança já vinculada a outro responsável não pode ser tomada por outra conta através do formulário de vínculo.
-- **Senhas:** novas senhas usam PBKDF2-HMAC-SHA-256 com salt aleatório e 600.000 iterações. Hashes SHA-256 antigos são migrados automaticamente no primeiro login.
+- **Senhas:** novas senhas usam PBKDF2-HMAC-SHA-256 com salt aleatório e 120.000 iterações. Hashes SHA-256 antigos são migrados automaticamente no primeiro login.
 - **Sessões:** expiração por inatividade de 30 minutos e duração máxima de 8 horas.
 - **HTML customizado:** valores controlados pelo usuário são escapados antes da renderização.
 - **Banco:** PostgreSQL/Neon deve ser configurado por segredo/variável de ambiente; SQLite é destinado ao desenvolvimento local.
 
 ### Limitação conhecida da sessão
 
-O cookie de sessão atual é criado pelo navegador via JavaScript, portanto não é possível marcar esse cookie como `HttpOnly` com a arquitetura atual. Em produção com dados reais, recomenda-se migrar para uma sessão gerenciada pelo servidor/provedor de identidade com proteção equivalente a `HttpOnly; Secure; SameSite=Strict`.
+O token de autenticação do PICTA não é gravado em cookie próprio nem exposto ao JavaScript da página. Com a arquitetura atual baseada em `st.session_state`, recarregar a página pode exigir novo login porque o Streamlit cria uma nova sessão de navegador. Em produção com dados reais, recomenda-se migrar para uma sessão gerenciada pelo servidor/provedor de identidade com proteção equivalente a `HttpOnly; Secure; SameSite=Strict`.
 
 ---
 

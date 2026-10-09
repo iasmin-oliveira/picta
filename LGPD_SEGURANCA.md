@@ -12,22 +12,22 @@ O PICTA foi desenvolvido como protótipo acadêmico de Comunicação Aumentativa
 
 ## 2. Credenciais
 
-- Novas senhas e senhas alteradas usam **PBKDF2-HMAC-SHA-256 com 600.000 iterações e salt aleatório**.
+- Novas senhas e senhas alteradas usam **PBKDF2-HMAC-SHA-256 com 120.000 iterações e salt aleatório**.
 - Hashes legados SHA-256 são aceitos somente para migração e substituídos por PBKDF2 após login bem-sucedido.
 - O código não armazena senhas em texto plano.
 - A senha mínima atualmente exigida no cadastro é de 6 caracteres.
 
 ## 3. Sessões e autenticação
 
-- Cada login cria um token aleatório de sessão armazenado no banco.
+- Cada login cria um token aleatório de sessão mantido no servidor e persistido no banco para revalidação.
 - O token de autenticação do PICTA fica somente no `st.session_state` da sessão do Streamlit e **não é gravado em cookie próprio nem exposto ao JavaScript da página**.
 - A sessão possui **máximo absoluto de 8 horas**.
 - Há expiração por **30 minutos de inatividade**.
-- O token é revogado de forma síncrona no logout.
+- O token é removido imediatamente da sessão ativa no logout e a cópia persistida é removida em seguida.
 - A aplicação revalida a sessão periodicamente durante a navegação.
 - O PICTA não depende mais de `streamlit-cookies-controller` para autenticação.
 
-A remoção do cookie próprio é intencional: o Streamlit não oferece ao código da aplicação uma API para definir diretamente um cookie próprio com `HttpOnly`. Em vez de tentar simular `HttpOnly` via JavaScript, o token de autenticação da aplicação permanece no estado de sessão do servidor.
+A remoção do cookie próprio é intencional: o Streamlit não oferece ao código da aplicação uma API para definir diretamente um cookie próprio com `HttpOnly`. Em vez de tentar simular `HttpOnly` via JavaScript, o token de autenticação da aplicação permanece no estado de sessão do servidor. Com essa arquitetura, recarregar a página pode exigir novo login; a persistência segura entre recarregamentos deve ser implementada por uma sessão gerenciada pelo servidor ou por um provedor de identidade.
 
 ## 4. Isolamento de dados por usuário
 

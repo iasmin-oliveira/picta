@@ -40,15 +40,9 @@ ORIENTACOES_CUIDADOR = {
     "perfil": (
         "Meu perfil",
         "Atualize seus dados de acesso e senha. Se você cuida de uma criança, também pode alterar a senha "
-        "dela nesta área quando houver vínculo ativo.",
+        "dela nesta área quando houver vínculo ativo. Os formulários da pesquisa também ficam nesta tela.",
     ),
 }
-
-FORMULARIOS_CUIDADOR = (
-    ("TCLE do responsável", "https://forms.gle/PaVDpQ3zyc5UVZt2A"),
-    ("Responsável avaliando o PICTA", "https://forms.gle/Ahx9LMLGtJ1ySgsd7"),
-    ("Criança avaliando o PICTA", "https://forms.gle/KfNQ4k3kdyF6eDsb9"),
-)
 
 
 def render() -> None:
@@ -151,18 +145,7 @@ def _render_orientacao(pag: str) -> None:
         '<div class="dashboard-orientation-body">'
         f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
         f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
-        f'{_render_links_formularios(FORMULARIOS_CUIDADOR)}'
         '</div>'
         '</details>',
         unsafe_allow_html=True,
     )
-
-
-def _render_links_formularios(links: tuple[tuple[str, str], ...]) -> str:
-    itens = ''.join(
-        '<a class="dashboard-form-link" '
-        f'href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">'
-        f'{html.escape(label, quote=True)}</a>'
-        for label, url in links
-    )
-    return f'<div class="dashboard-orientation-links">{itens}</div>' if itens else ''

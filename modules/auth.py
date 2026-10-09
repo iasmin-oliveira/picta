@@ -17,6 +17,10 @@ from utils.passwords import hash_password, verify_password
 _log = get_logger(__name__)
 INACTIVITY_MINUTES = 30
 SESSION_MAX_HOURS = 8
+_LOCAL_SESSIONS: dict[str, dict] = {}
+_LOCAL_SESSION_LOCK = threading.Lock()
+_AUTH_WARMUP_STARTED = False
+_AUTH_WARMUP_LOCK = threading.Lock()
 
 
 def autenticar_usuario(username: str, senha: str) -> Optional[dict]:
@@ -33,13 +37,13 @@ def autenticar_usuario(username: str, senha: str) -> Optional[dict]:
     if not result:
         _log.warning("Tentativa de login falhou: username=%s", username)
         return None
-    valido, legado = verify_password(senha, result.get("senha_hash"))
+    valido, precisa_atualizar_hash = verify_password(senha, result.get("senha_hash"))
     if not valido:
         _log.warning("Tentativa de login falhou: username=%s", username)
         return None
-    if legado:
+    if precisa_atualizar_hash:
         executar("UPDATE Utilizadores SET senha_hash = ? WHERE id = ?", (hash_password(senha), result["id"]), commit=True)
-        _log.info("Hash legado migrado para PBKDF2: usuario_id=%s", result["id"])
+        _log.info("Hash de senha atualizado: usuario_id=%s", result["id"])
     result.pop("senha_hash", None)
     return result
 
@@ -62,13 +66,65 @@ def criar_usuario(nome: str, username: str, senha: str, perfil: str, email: str 
     return None
 
 
-def criar_sessao(usuario_id: int) -> str:
+def aquecer_autenticacao_assincrono() -> None:
+    """Open the first database connection before the user submits the login form."""
+    global _AUTH_WARMUP_STARTED
+    if _AUTH_WARMUP_STARTED:
+        return
+    with _AUTH_WARMUP_LOCK:
+        if _AUTH_WARMUP_STARTED:
+            return
+        _AUTH_WARMUP_STARTED = True
+
+    def worker() -> None:
+        try:
+            executar("SELECT 1 AS ok", fetchone=True)
+        except Exception as exc:
+            _log.warning("Nao foi possivel aquecer autenticacao: %s", exc)
+
+    threading.Thread(target=worker, name="picta-aquecer-auth", daemon=True).start()
+
+
+def criar_sessao(usuario_id: int, usuario: Optional[dict] = None) -> str:
     token = uuid.uuid4().hex + uuid.uuid4().hex
     agora = datetime.utcnow()
     expira = agora + timedelta(hours=SESSION_MAX_HOURS)
-    executar("INSERT INTO Sessoes(token, usuario_id, expira_em, ultima_atividade) VALUES(?,?,?,?)", (token, usuario_id, expira.isoformat(), agora.isoformat()), commit=True)
-    _limpar_sessoes_expiradas_assincrono(usuario_id, agora)
+    with _LOCAL_SESSION_LOCK:
+        _LOCAL_SESSIONS[token] = {
+            "usuario_id": int(usuario_id),
+            "usuario": dict(usuario) if usuario else None,
+            "expira_em": expira,
+            "ultima_atividade": agora,
+        }
+    _persistir_sessao_assincrono(token, usuario_id, expira, agora)
     return token
+
+
+def _persistir_sessao_assincrono(token: str, usuario_id: int, expira: datetime, agora: datetime) -> None:
+    def worker() -> None:
+        try:
+            with _LOCAL_SESSION_LOCK:
+                if token not in _LOCAL_SESSIONS:
+                    return
+            executar(
+                "INSERT INTO Sessoes(token, usuario_id, expira_em, ultima_atividade) VALUES(?,?,?,?)",
+                (token, usuario_id, expira.isoformat(), agora.isoformat()),
+                commit=True,
+            )
+            with _LOCAL_SESSION_LOCK:
+                sessao_ativa = token in _LOCAL_SESSIONS
+            if not sessao_ativa:
+                executar("DELETE FROM Sessoes WHERE token = ?", (token,), commit=True)
+                return
+            executar(
+                "DELETE FROM Sessoes WHERE usuario_id = ? AND expira_em < ?",
+                (usuario_id, agora.isoformat()),
+                commit=True,
+            )
+        except Exception as exc:
+            _log.warning("Nao foi possivel persistir sessao: %s", exc)
+
+    threading.Thread(target=worker, name="picta-persistir-sessao", daemon=True).start()
 
 
 def _limpar_sessoes_expiradas_assincrono(usuario_id: int, agora: datetime) -> None:
@@ -84,24 +140,64 @@ def validar_sessao(token: str) -> Optional[dict]:
     if not token:
         return None
     agora = datetime.utcnow()
+    with _LOCAL_SESSION_LOCK:
+        local = _LOCAL_SESSIONS.get(token)
+        if local:
+            expira = local.get("expira_em")
+            ultima = local.get("ultima_atividade")
+            if expira and agora > expira:
+                _LOCAL_SESSIONS.pop(token, None)
+                return None
+            if ultima and (agora - ultima).total_seconds() / 60 > INACTIVITY_MINUTES:
+                _LOCAL_SESSIONS.pop(token, None)
+                return None
+            usuario = local.get("usuario")
+            if usuario:
+                return dict(usuario)
+
     row = executar("SELECT u.id, u.nome, u.perfil, u.username, u.email, u.deve_trocar_senha, c.id AS crianca_id, s.ultima_atividade FROM Sessoes s JOIN Utilizadores u ON u.id = s.usuario_id LEFT JOIN Criancas c ON c.utilizador_id = u.id WHERE s.token = ? AND s.expira_em > ? ORDER BY c.id ASC LIMIT 1", (token, agora.isoformat()), fetchone=True)
     if not row:
         return None
     ultima = _parse_datetime(row.get("ultima_atividade"))
     if ultima and (agora - ultima.replace(tzinfo=None)).total_seconds() / 60 > INACTIVITY_MINUTES:
-        revogar_sessao(token)
+        with _LOCAL_SESSION_LOCK:
+            _LOCAL_SESSIONS.pop(token, None)
+        try:
+            executar("DELETE FROM Sessoes WHERE token = ?", (token,), commit=True)
+        except Exception as exc:
+            _log.warning("Nao foi possivel revogar sessao expirada: %s", exc)
         return None
     return {k: v for k, v in row.items() if k != "ultima_atividade"}
 
 
 def renovar_sessao(token: str) -> None:
     if token:
-        executar("UPDATE Sessoes SET ultima_atividade = ? WHERE token = ?", (datetime.utcnow().isoformat(), token), commit=True)
+        agora = datetime.utcnow()
+        with _LOCAL_SESSION_LOCK:
+            if token in _LOCAL_SESSIONS:
+                _LOCAL_SESSIONS[token]["ultima_atividade"] = agora
+
+        def worker() -> None:
+            try:
+                executar("UPDATE Sessoes SET ultima_atividade = ? WHERE token = ?", (agora.isoformat(), token), commit=True)
+            except Exception as exc:
+                _log.warning("Nao foi possivel renovar sessao persistida: %s", exc)
+
+        threading.Thread(target=worker, name="picta-renovar-sessao", daemon=True).start()
 
 
 def revogar_sessao(token: Optional[str]) -> None:
     if token:
-        executar("DELETE FROM Sessoes WHERE token = ?", (token,), commit=True)
+        with _LOCAL_SESSION_LOCK:
+            _LOCAL_SESSIONS.pop(token, None)
+
+        def worker() -> None:
+            try:
+                executar("DELETE FROM Sessoes WHERE token = ?", (token,), commit=True)
+            except Exception:
+                pass
+
+        threading.Thread(target=worker, name="picta-revogar-sessao", daemon=True).start()
 
 
 def obter_crianca_por_usuario_id(utilizador_id: int) -> Optional[dict]:

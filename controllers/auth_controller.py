@@ -14,6 +14,7 @@ import streamlit as st
 
 from modules.auth import (
     autenticar_usuario,
+    aquecer_autenticacao_assincrono,
     criar_sessao,
     renovar_sessao,
     revogar_sessao,
@@ -68,6 +69,7 @@ def is_authenticated() -> bool:
 
 
 def login() -> None:
+    aquecer_autenticacao_assincrono()
     tela = st.session_state.get("tela", "login")
     if tela == "cadastro":
         from views.cadastro import render as render_cadastro
@@ -99,7 +101,8 @@ def login() -> None:
         feedback.error("Usuário ou senha não conferem. Tente novamente.")
         return
 
-    token = criar_sessao(user["id"])
+    token = criar_sessao(user["id"], user)
+    _limpar_query_params()
     st.session_state.update({
         "autenticado": True,
         "usuario": user,
@@ -148,5 +151,14 @@ def logout() -> None:
             revogar_sessao(token)
         except Exception:
             pass
+    _limpar_query_params()
     _encerrar_sessao_local()
     st.rerun()
+
+
+def _limpar_query_params() -> None:
+    try:
+        if st.query_params:
+            st.query_params.clear()
+    except Exception:
+        pass

@@ -1957,3 +1957,107 @@ button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"]::befo
     line-height: 1.35 !important;
   }
 }
+
+/* Mantem o controle nativo de abrir/fechar menu acessivel em todas as telas. */
+[data-testid="stHeader"] {
+  display: block !important;
+  height: 0 !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+[data-testid="stToolbar"] {
+  display: flex !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+[data-testid="stToolbar"] button:not([data-testid="stExpandSidebarButton"]):not([data-testid="stBaseButton-headerNoPadding"]):not([aria-label="Close sidebar"]) {
+  display: none !important;
+}
+
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+[data-testid="stSidebar"] {
+  position: relative !important;
+  z-index: 2100 !important;
+  pointer-events: auto !important;
+}
+
+[data-testid="stSidebar"] > div:first-child {
+  position: relative !important;
+  z-index: 2101 !important;
+  pointer-events: auto !important;
+}
+
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+button[data-testid="stExpandSidebarButton"],
+[aria-label="Open sidebar"] {
+  position: fixed !important;
+  top: .55rem !important;
+  left: .65rem !important;
+  right: auto !important;
+  z-index: 3000 !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  width: 2.35rem !important;
+  min-width: 2.35rem !important;
+  height: 2.35rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.94) !important;
+  border: 1px solid var(--gray-200) !important;
+  box-shadow: var(--shadow-s) !important;
+}
+
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapseButton"] button,
+button[data-testid="stBaseButton-headerNoPadding"],
+[aria-label="Close sidebar"] {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+button[data-testid="stBaseButton-headerNoPadding"]::after,
+button[data-testid="baseButton-headerNoPadding"]::after,
+[aria-label="Close sidebar"]::after {
+  content: "\2039" !important;
+  color: var(--indigo-700) !important;
+  font-family: "Segoe UI", system-ui, sans-serif !important;
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+@media (min-width: 901px) {
+  [data-testid="stSidebar"],
+  [data-testid="stSidebar"][aria-expanded="false"],
+  [data-testid="stSidebar"][aria-expanded="true"] {
+    min-width: 270px !important;
+    width: 270px !important;
+    max-width: 270px !important;
+    transform: none !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+
+  [data-testid="stSidebar"] > div:first-child,
+  [data-testid="stSidebar"][aria-expanded="false"] > div:first-child,
+  [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+    min-width: 270px !important;
+    width: 270px !important;
+    max-width: 270px !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+}

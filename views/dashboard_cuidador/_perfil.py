@@ -13,6 +13,12 @@ from modules.auth import (
     obter_usuario_por_id,
 )
 
+FORMULARIOS_PERFIL_RESPONSAVEL = (
+    ("TCLE do responsável", "https://forms.gle/PaVDpQ3zyc5UVZt2A"),
+    ("Responsável avaliando o PICTA", "https://forms.gle/Ahx9LMLGtJ1ySgsd7"),
+    ("Criança avaliando o PICTA", "https://forms.gle/KfNQ4k3kdyF6eDsb9"),
+)
+
 
 def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
     st.markdown(
@@ -60,6 +66,16 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
             '  </div>'
             '</div>', unsafe_allow_html=True,
         )
+        st.markdown(
+            '<div class="glass-card" style="padding:1rem 1.2rem;">'
+            '  <div class="sec-header" style="margin-bottom:.5rem">🧪 Formulários da pesquisa</div>'
+            '  <div style="font-size:.82rem;color:#4b5563;font-weight:600;line-height:1.6">'
+            '    Use estes links para o TCLE e para as avaliações do PICTA pelo responsável e pela criança.'
+            '  </div>'
+            f'  {_render_links_formularios(FORMULARIOS_PERFIL_RESPONSAVEL)}'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
     with col_form:
         st.markdown('<div class="sec-header">✏️ Editar informações</div>', unsafe_allow_html=True)
@@ -106,3 +122,13 @@ def render_perfil(usuario_id, nome: str, primeiro: str, label: str) -> None:
                         st.error(erro)
                     else:
                         st.success("Senha da crianca atualizada.")
+
+
+def _render_links_formularios(links: tuple[tuple[str, str], ...]) -> str:
+    itens = ''.join(
+        '<a class="dashboard-form-link" '
+        f'href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(label, quote=True)}</a>'
+        for label, url in links
+    )
+    return f'<div class="dashboard-orientation-links">{itens}</div>' if itens else ''

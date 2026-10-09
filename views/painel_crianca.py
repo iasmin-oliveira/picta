@@ -55,6 +55,10 @@ def render() -> None:
         st.warning("Faça login para acessar o PICTA.")
         st.stop()
     if _query_valor("pc_logout"):
+        try:
+            st.query_params.clear()
+        except Exception:
+            pass
         from controllers.auth_controller import logout
         logout()
 

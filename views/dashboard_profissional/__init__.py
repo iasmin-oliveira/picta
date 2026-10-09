@@ -40,9 +40,8 @@ ORIENTACOES_PROFISSIONAL = {
     ),
     "pesquisa": (
         "Coleta TCC",
-        "Esta tela é um modo interno de coleta pseudonimizada no próprio PICTA. Use apenas se você quiser "
-        "registrar sessões controladas pela plataforma. Para TCLE e avaliação do profissional, use o formulário "
-        "externo disponibilizado aqui.",
+        "Use esta tela para acessar o formulário externo do profissional. O preenchimento do TCLE e da avaliação "
+        "do PICTA acontece fora da plataforma, pelo link do Google Forms.",
     ),
     "perfil": (
         "Meu perfil",
@@ -50,10 +49,6 @@ ORIENTACOES_PROFISSIONAL = {
         "consigam convidar você para acompanhar uma criança.",
     ),
 }
-
-FORMULARIOS_PROFISSIONAL = (
-    ("TCLE e avaliação do profissional", "https://forms.gle/rpAzo45ttGTan8wA6"),
-)
 
 
 def render() -> None:
@@ -198,18 +193,7 @@ def _render_orientacao(pag: str) -> None:
         '<div class="dashboard-orientation-body">'
         f'<div class="dashboard-orientation-title">{html.escape(titulo, quote=True)}</div>'
         f'<div class="dashboard-orientation-text">{html.escape(texto, quote=True)}</div>'
-        f'{_render_links_formularios(FORMULARIOS_PROFISSIONAL)}'
         '</div>'
         '</details>',
         unsafe_allow_html=True,
     )
-
-
-def _render_links_formularios(links: tuple[tuple[str, str], ...]) -> str:
-    itens = ''.join(
-        '<a class="dashboard-form-link" '
-        f'href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">'
-        f'{html.escape(label, quote=True)}</a>'
-        for label, url in links
-    )
-    return f'<div class="dashboard-orientation-links">{itens}</div>' if itens else ''

@@ -6,7 +6,7 @@ import hashlib
 import hmac
 import secrets
 
-PBKDF2_ITERATIONS = 600_000
+PBKDF2_ITERATIONS = 120_000
 PREFIX = "pbkdf2_sha256"
 
 
@@ -25,11 +25,13 @@ def verify_password(password: str, stored_hash: str) -> tuple[bool, bool]:
     try:
         if stored_hash.startswith(f"{PREFIX}$"):
             _, iterations, salt_hex, digest_hex = stored_hash.split("$", 3)
+            iterations_int = int(iterations)
             expected = bytes.fromhex(digest_hex)
             actual = hashlib.pbkdf2_hmac(
-                "sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), int(iterations)
+                "sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), iterations_int
             )
-            return hmac.compare_digest(actual, expected), False
+            valid = hmac.compare_digest(actual, expected)
+            return valid, valid and iterations_int != PBKDF2_ITERATIONS
 
         legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
         return hmac.compare_digest(legacy, stored_hash), True

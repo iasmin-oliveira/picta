@@ -490,12 +490,14 @@ footer, #MainMenu { display: none !important; }
         flex-wrap: wrap !important;
         gap: 0.55rem !important;
     }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
     [data-testid="stHorizontalBlock"] > [data-testid="column"] {
         width: calc(50% - .28rem) !important;
         min-width: calc(50% - .28rem) !important;
         max-width: calc(50% - .28rem) !important;
         flex: 0 0 calc(50% - .28rem) !important;
     }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] > div,
     [data-testid="stHorizontalBlock"] > [data-testid="column"] > div {
         width: 100% !important;
     }
@@ -657,6 +659,68 @@ footer, #MainMenu { display: none !important; }
     }
     [data-testid="stButton"] > button::first-line {
         font-size: 3.1rem !important;
+        line-height: 1 !important;
+    }
+}
+
+/* Tamanho final do painel infantil: grande no computador, duas colunas no telefone. */
+@media (min-width: 1024px) {
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+        padding: 1rem 1.35rem 1.4rem !important;
+    }
+    .pc-header {
+        padding: 1.15rem 1.45rem;
+    }
+    .pc-saudacao {
+        font-size: 1.75rem;
+    }
+    .pc-sub {
+        font-size: 1.08rem;
+    }
+    .pc-panel-hint {
+        font-size: 1.14rem;
+    }
+    [data-testid="stButton"] > button {
+        height: 138px !important;
+        min-height: 138px !important;
+        border-radius: 18px !important;
+        font-size: 1.42rem !important;
+        line-height: 1.15 !important;
+        padding: 0.72rem 0.55rem !important;
+    }
+    [data-testid="stButton"] > button::first-line {
+        font-size: 3.85rem !important;
+        line-height: 1 !important;
+    }
+}
+
+@media (max-width: 720px) {
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.6rem !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        width: calc(50% - 0.3rem) !important;
+        min-width: calc(50% - 0.3rem) !important;
+        max-width: calc(50% - 0.3rem) !important;
+        flex: 0 0 calc(50% - 0.3rem) !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] > div,
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] > div {
+        width: 100% !important;
+    }
+    [data-testid="stButton"] > button {
+        height: 86px !important;
+        min-height: 86px !important;
+        font-size: 1rem !important;
+        line-height: 1.12 !important;
+    }
+    [data-testid="stButton"] > button::first-line {
+        font-size: 2.65rem !important;
         line-height: 1 !important;
     }
 }
