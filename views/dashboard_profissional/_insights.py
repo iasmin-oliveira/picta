@@ -17,12 +17,13 @@ from ._constants import EMOCOES_ALERTA, EMOCOES_POSITIVAS, PESO_EMOCAO
 def render_insights(crianca_id, crianca_nome: str) -> None:
     st.markdown(
         f'<div class="page-header">'
-        f'  <div class="page-title">🔬 Insights</div>'
+        f'  <div class="page-title">🔎 Análise de uso</div>'
         f'  <div class="page-subtitle">'
         f'    Leitura rápida dos padrões de comunicação de <b>{html.escape(crianca_nome)}</b>.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
+    st.caption("Indicadores descritivos e heurísticos derivados dos registros; não constituem avaliação clínica nem diagnóstico.")
 
     hoje = datetime.datetime.now(APP_TZ).date()
     ini_key = f"ia_ini_{crianca_id}"
@@ -50,7 +51,7 @@ def render_insights(crianca_id, crianca_nome: str) -> None:
 
     df = _preparar_dataframe(registos)
     df_em = df[df["categoria"] == "emocao"].copy()
-    score = _score_bem_estar(df_em)
+    score = _indice_heuristico(df_em)
     top = df["pictograma"].value_counts()
     top_nome = str(top.index[0]).title() if not top.empty else "-"
     hora_pico = int(df["hora"].value_counts().idxmax()) if not df.empty else 0
@@ -59,7 +60,7 @@ def render_insights(crianca_id, crianca_nome: str) -> None:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Interações", len(df))
     c2.metric("Dias ativos", dias)
-    c3.metric("Bem-estar", f"{score:.1f}/10")
+    c3.metric("Índice heurístico", f"{score:.1f}/10", help="Indicador baseado em regras fixas de classificação dos rótulos emocionais. Não representa medida clínica.")
     c4.metric("Pico", f"{hora_pico:02d}h")
 
     st.markdown(
@@ -104,8 +105,8 @@ def render_insights(crianca_id, crianca_nome: str) -> None:
         st.bar_chart(top_itens, use_container_width=True)
 
     with col_b:
-        st.markdown('<div class="chart-label">Bem-estar por dia</div>', unsafe_allow_html=True)
-        score_dia = _score_por_dia(df_em)
+        st.markdown('<div class="chart-label">Índice heurístico por dia</div>', unsafe_allow_html=True)
+        score_dia = _indice_heuristico_por_dia(df_em)
         if score_dia.empty:
             st.caption("Ainda não há emoções suficientes para pontuar o período.")
         else:
@@ -117,7 +118,7 @@ def render_insights(crianca_id, crianca_nome: str) -> None:
                     y=alt.Y("score:Q", title="", scale=alt.Scale(domain=[0, 10])),
                     tooltip=[
                         alt.Tooltip("data:T", title="Data", format="%d/%m/%Y"),
-                        alt.Tooltip("score:Q", title="Bem-estar", format=".1f"),
+                        alt.Tooltip("score:Q", title="Índice heurístico", format=".1f"),
                     ],
                 )
                 .properties(height=260)
@@ -151,14 +152,14 @@ def _preparar_dataframe(registos: list[dict]) -> pd.DataFrame:
     return df
 
 
-def _score_bem_estar(df_em: pd.DataFrame) -> float:
+def _indice_heuristico(df_em: pd.DataFrame) -> float:
     if df_em.empty:
         return 5.0
     pesos = df_em["pictograma"].map(PESO_EMOCAO).fillna(0)
     return float(((pesos.mean() + 1) / 2 * 10).clip(0, 10))
 
 
-def _score_por_dia(df_em: pd.DataFrame) -> pd.DataFrame:
+def _indice_heuristico_por_dia(df_em: pd.DataFrame) -> pd.DataFrame:
     if df_em.empty:
         return pd.DataFrame(columns=["data", "score"])
     df = df_em.copy()
@@ -169,25 +170,25 @@ def _score_por_dia(df_em: pd.DataFrame) -> pd.DataFrame:
 
 def _resumo(score: float, top_nome: str, hora_pico: int) -> str:
     if score >= 6.5:
-        tom = "predomínio de emoções positivas"
+        tom = "maior proporção de rótulos previamente classificados como positivos"
     elif score >= 4.5:
-        tom = "equilíbrio entre emoções positivas e sinais de atenção"
+        tom = "distribuição equilibrada entre rótulos positivos e rótulos de atenção"
     else:
-        tom = "maior presença de sinais de atenção"
-    return f"O período mostra {tom}. O item mais frequente foi {top_nome}, e o horário de maior uso foi {hora_pico:02d}h."
+        tom = "maior proporção de rótulos previamente classificados como atenção"
+    return f"O período apresenta {tom}. O item mais frequente foi {top_nome}, e o horário com mais registros foi {hora_pico:02d}h. A síntese descreve apenas os rótulos selecionados e não constitui avaliação clínica."
 
 
 def _sugestao(df: pd.DataFrame, df_em: pd.DataFrame, score: float, hora_pico: int) -> str:
     necessidades = df[df["categoria"] == "necessidade"]["pictograma"].value_counts()
     if not necessidades.empty:
         top = str(necessidades.index[0]).lower()
-        return f"Observe se '{top}' aparece perto de {hora_pico:02d}h e antecipe esse recurso na rotina."
+        return f"O item mais selecionado na categoria de necessidades foi '{top}'. Verifique com o responsável se o vocabulário disponível contempla as situações comunicadas."
     if score < 4.5:
-        return "Priorize estratégias de regulação e observe contexto, ruído, sono e transições antes dos horários de pico."
+        return "Os rótulos configurados como sinais de atenção foram mais frequentes no período. Essa classificação é heurística e não permite inferir o estado emocional da criança."
     if not df_em.empty:
         top_em = str(df_em["pictograma"].value_counts().index[0]).lower()
-        return f"Use atividades de reforço quando a emoção '{top_em}' aparecer associada a boa participação."
-    return "Continue registrando para formar uma linha de base clínica mais clara."
+        return f"O rótulo emocional mais frequente foi '{top_em}'. Interprete essa frequência junto do contexto e das informações fornecidas pela família ou pelo profissional."
+    return "Ainda há poucos registros para resumir padrões de uso neste período."
 
 
 def _render_alertas(df: pd.DataFrame, df_em: pd.DataFrame) -> None:
@@ -195,7 +196,7 @@ def _render_alertas(df: pd.DataFrame, df_em: pd.DataFrame) -> None:
     if not df_em.empty:
         pct_alerta = 100 * df_em["pictograma"].isin(EMOCOES_ALERTA).mean()
         if pct_alerta >= 50:
-            alertas.append(f"{pct_alerta:.0f}% das emoções registradas são sinais de atenção.")
+            alertas.append(f"{pct_alerta:.0f}% dos registros emocionais pertencem a rótulos configurados como atenção; trata-se de classificação heurística, não clínica.")
 
     noturnos = int(((df["hora"] >= 23) | (df["hora"] <= 5)).sum())
     if noturnos:
@@ -205,9 +206,9 @@ def _render_alertas(df: pd.DataFrame, df_em: pd.DataFrame) -> None:
     if ajuda >= 2:
         alertas.append(f"'AJUDA' foi selecionada {ajuda} vezes no período.")
 
-    st.markdown('<div class="chart-label">Pontos de atenção</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-label">Sinalizadores descritivos</div>', unsafe_allow_html=True)
     if not alertas:
-        st.markdown('<div class="ok-card">Nenhum ponto crítico detectado no período.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ok-card">Nenhum dos critérios descritivos configurados foi atingido no período.</div>', unsafe_allow_html=True)
         return
 
     for alerta in alertas:
@@ -247,27 +248,27 @@ def _render_relatorio(
     recomendacao = _sugestao(df, df_em, score, hora_pico)
 
     linhas = [
-        "PICTA - Relatório de insights",
+        "PICTA - Relatório descritivo de uso",
         f"Paciente: {nome}",
         f"Período: {periodo_txt}",
         f"Total de interações: {total}",
         f"Dias ativos: {dias_ativos}",
-        f"Score de bem-estar: {score:.1f}/10",
+        f"Índice heurístico de rótulos emocionais: {score:.1f}/10",
         f"Emoções positivas: {positivas} ({positivas_pct:.0f}%)",
-        f"Emoções de atenção: {atencao} ({atencao_pct:.0f}%)",
+        f"Rótulos emocionais configurados como atenção: {atencao} ({atencao_pct:.0f}%)",
         f"Horário de maior uso: {hora_pico:02d}h",
         f"Registros entre 23h e 5h: {noturnos}",
         f"Por categoria: {categoria_txt}",
         f"Mais frequentes: {top_txt}",
         f"Pedidos recorrentes: {necessidades_txt}",
         f"Ações recorrentes: {acoes_txt}",
-        f"Sugestão: {recomendacao}",
+        f"Nota de acompanhamento: {recomendacao}",
     ]
     relatorio = "\n".join(linhas)
 
     resumo_html = (
         '<details class="picta-details picta-summary-details">'
-        '  <summary><span>Ver resumo textual</span><small>Síntese clínica do período</small></summary>'
+        '  <summary><span>Ver resumo textual</span><small>Resumo descritivo do período</small></summary>'
         '  <div class="picta-summary-body">'
         f'    <p><b>{html.escape(nome)}</b> teve <b>{total}</b> comunicações em '
         f'    <b>{dias_ativos}</b> dia(s) ativo(s), com bem-estar estimado em '
@@ -287,7 +288,7 @@ def _render_relatorio(
     st.download_button(
         "Baixar resumo (.txt)",
         relatorio.encode("utf-8"),
-        f"insights_{safe_filename(nome)}_{filename_date(d_ini)}_{filename_date(d_fim)}.txt",
+        f"analise_uso_{safe_filename(nome)}_{filename_date(d_ini)}_{filename_date(d_fim)}.txt",
         "text/plain",
         use_container_width=True,
     )
