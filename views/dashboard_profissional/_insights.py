@@ -271,7 +271,7 @@ def _render_relatorio(
         '  <summary><span>Ver resumo textual</span><small>Resumo descritivo; não é avaliação clínica</small></summary>'
         '  <div class="picta-summary-body">'
         f'    <p><b>{html.escape(nome)}</b> teve <b>{total}</b> comunicações em '
-        f'    <b>{dias_ativos}</b> dia(s) ativo(s), com bem-estar estimado em '
+        f'    <b>{dias_ativos}</b> dia(s) ativo(s), com índice heurístico de rótulos emocionais de '
         f'    <b>{score:.1f}/10</b>.</p>'
         '    <div class="picta-summary-grid">'
         f'      <div><strong>Rótulos emocionais</strong><span>{positivas_pct:.0f}% configurados como positivos · {atencao_pct:.0f}% como atenção</span></div>'
